@@ -14,6 +14,13 @@ select = ["ALL"]
 ignore = []
 fail_on = "info"
 
+[tool.vgi-lint-check.execution]
+# Run mode: every example (read_mft / attributes / streams / scalars) is RUN
+# against the attached worker, reading the committed data/sample.mft. Run the
+# linter from the repo root so the read_blob('data/sample.mft') paths resolve.
+enabled = true
+mode = "run"
+
 [tool.vgi-lint-check.options]
 # Most output columns (read_mft's 25-column timeline, attributes, streams) carry
 # a comment; struct-returning scalars expose their shape via doc tags instead.

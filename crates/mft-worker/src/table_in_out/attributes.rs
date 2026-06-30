@@ -110,6 +110,24 @@ impl TableInOutFunction for Attributes {
              (UBIGINT), `flags` (UINTEGER)."
                 .into(),
         ));
+        tags.push((
+            "vgi.example_queries".into(),
+            "SELECT entry, type_name, resident, name, logical_size\n\
+             FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry\n\
+             FROM read_blob('data/sample.mft'))));"
+                .into(),
+        ));
+        // A guaranteed-runnable, verified example over the committed sample $MFT
+        // (run from the repo root, where data/ lives). Entry 22 carries
+        // $STANDARD_INFORMATION + two $FILE_NAME + a primary $DATA + an ADS $DATA.
+        tags.push((
+            "vgi.executable_examples".into(),
+            r#"[
+  {"description": "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
+   "sql": "SELECT type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft')))) ORDER BY attribute_id"}
+]"#
+            .into(),
+        ));
         FunctionMetadata {
             description: "Fan each MFT record's attributes into rows (relation in/out)".into(),
             tags,
