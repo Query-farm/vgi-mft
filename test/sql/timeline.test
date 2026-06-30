@@ -1,0 +1,109 @@
+# name: test/sql/timeline.test
+# group: [vgi_mft]
+#
+# read_mft: the forensic timeline over a committed synthetic $MFT
+# (data/sample.mft). Path reconstruction, deleted-record recovery, the
+# timestomp hunt, and the streams-mode ADS fan-out — the §SQL surface examples.
+
+require-env VGI_MFT_WORKER
+
+require-env VGI_MFT_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mft' AS mft (TYPE vgi, LOCATION '${VGI_MFT_WORKER}');
+
+statement ok
+SET search_path = 'mft.main';
+
+# One row per (non-empty) FILE record. The sample has 10 records.
+query I
+SELECT count(*) FROM read_mft('${VGI_MFT_DATA}/sample.mft');
+----
+10
+
+# Example 1 — reconstructed paths (parent-reference chains).
+query IT
+SELECT entry, full_path
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry IN (12, 20)
+ORDER BY entry;
+----
+12	Windows\System32
+20	Windows\System32\cmd.exe
+
+# Example 3 — deleted records still resident (recoverable artifacts).
+query T
+SELECT file_name
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE is_deleted AND NOT is_dir
+ORDER BY file_name;
+----
+deleted.log
+
+# Deleted records are included by default; filtering to allocated drops them.
+query I
+SELECT count(*) FROM read_mft('${VGI_MFT_DATA}/sample.mft', mode := 'allocated')
+WHERE is_deleted;
+----
+0
+
+# Example 2 — the timestomp hunt: SI rewound before FN is a suspect record.
+query T
+SELECT full_path
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE is_timestomp_suspect
+ORDER BY full_path;
+----
+Windows\System32\timestomped.exe
+
+# Example 5 — carve resident file content (small files live in the record).
+query T
+SELECT resident_data::VARCHAR
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry = 22;
+----
+hello
+
+# A non-resident $DATA reports size only (no resident bytes).
+query III
+SELECT logical_size, physical_size, resident_data IS NULL
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry = 21;
+----
+1048576	1052672	true
+
+# Example 4 — surface every alternate data stream (streams mode).
+query T
+SELECT ads_name
+FROM read_mft('${VGI_MFT_DATA}/sample.mft', mode := 'streams')
+WHERE ads_name IS NOT NULL
+ORDER BY ads_name;
+----
+hidden
+
+# An orphan (missing parent) is rooted under \$Orphan with a diagnostic.
+query TT
+SELECT full_path, diagnostics
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry = 25;
+----
+\$Orphan\999\orphan.dat	orphan-parent
+
+# host := scopes the collection and populates the host column.
+query T
+SELECT DISTINCT host
+FROM read_mft('${VGI_MFT_DATA}/sample.mft', host := 'IR-2026-host01');
+----
+IR-2026-host01
+
+# Both MACB quads are first-class columns: the timestomped record's SI created
+# (2009) predates its FN created (2020).
+query I
+SELECT (si_created < fn_created)::INT
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry = 24;
+----
+1

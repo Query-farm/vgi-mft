@@ -1,0 +1,20 @@
+# vgi-lint-check configuration for vgi-mft.
+#
+# All static metadata rules (VGI1xx–VGI5xx) are enabled and gate at `info`:
+# catalog/schema source_url + tags, per-function titles/docs/keywords, and
+# per-argument docs on every function.
+#
+# Execution (VGI9xx) runs the example queries against the attached worker. The
+# read_mft / attributes / streams examples read the committed synthetic $MFT at
+# `data/sample.mft`, so run the linter from the REPO ROOT (where `data/` lives):
+#   cargo build --release
+#   vgi-lint-check --location target/release/mft-worker --fail-on info
+[tool.vgi-lint-check]
+select = ["ALL"]
+ignore = []
+fail_on = "info"
+
+[tool.vgi-lint-check.options]
+# Most output columns (read_mft's 25-column timeline, attributes, streams) carry
+# a comment; struct-returning scalars expose their shape via doc tags instead.
+column_comment_min_ratio = 0.8

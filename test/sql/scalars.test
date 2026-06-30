@@ -1,0 +1,91 @@
+# name: test/sql/scalars.test
+# group: [vgi_mft]
+#
+# The per-(blob, entry) scalars (mft_record, full_path, record_header,
+# well_formed, timestomp, mft_version) and the relation-in/out fan-outs
+# (attributes, streams), driven over the committed sample $MFT read as a BLOB.
+
+require-env VGI_MFT_WORKER
+
+require-env VGI_MFT_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mft' AS mft (TYPE vgi, LOCATION '${VGI_MFT_WORKER}');
+
+statement ok
+SET search_path = 'mft.main';
+
+# A non-empty version string.
+query I
+SELECT length(mft_version()) > 0;
+----
+true
+
+# full_path(blob, entry): reconstruct a single entry's path.
+query T
+SELECT full_path((SELECT content FROM read_blob('${VGI_MFT_DATA}/sample.mft')), 20);
+----
+Windows\System32\cmd.exe
+
+# record_header(blob, entry): cheap header probe.
+query TTI
+SELECT h.signature, h.is_dir, h.sequence
+FROM (SELECT record_header((SELECT content FROM read_blob('${VGI_MFT_DATA}/sample.mft')), 12) AS h);
+----
+FILE	true	1
+
+# well_formed(blob, entry): a clean record validates ok.
+query TT
+SELECT w.ok, w.kind
+FROM (SELECT well_formed((SELECT content FROM read_blob('${VGI_MFT_DATA}/sample.mft')), 20) AS w);
+----
+true	ok
+
+# mft_record(blob, entry): the lossless STRUCT view — primary name + ADS count.
+query TI
+SELECT r.fn[1].name, len(r.ads)
+FROM (SELECT mft_record((SELECT content FROM read_blob('${VGI_MFT_DATA}/sample.mft')), 22) AS r);
+----
+notes.txt	1
+
+# timestomp(si, fn): the heuristic over the timestomped record's quads.
+query T
+SELECT timestomp(
+         {'created': si_created, 'modified': si_modified,
+          'accessed': si_accessed, 'mft_modified': si_mft_modified},
+         {'created': fn_created, 'modified': fn_modified,
+          'accessed': fn_accessed, 'mft_modified': fn_mft_modified}).suspect
+FROM read_mft('${VGI_MFT_DATA}/sample.mft')
+WHERE entry = 24;
+----
+true
+
+# attributes((FROM rel)): fan a record's attributes into rows. Entry 22 has
+# $STANDARD_INFORMATION + two $FILE_NAME + primary $DATA + ADS $DATA = 5.
+query I
+SELECT count(*)
+FROM attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry
+                       FROM read_blob('${VGI_MFT_DATA}/sample.mft'))));
+----
+5
+
+# streams((FROM rel)): entry 22 has a primary stream + one ADS = 2 streams.
+query I
+SELECT count(*)
+FROM streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry
+                    FROM read_blob('${VGI_MFT_DATA}/sample.mft'))));
+----
+2
+
+# ...and the named stream is the 'hidden' ADS.
+query T
+SELECT name
+FROM streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry
+                    FROM read_blob('${VGI_MFT_DATA}/sample.mft'))))
+WHERE name IS NOT NULL
+ORDER BY name;
+----
+hidden

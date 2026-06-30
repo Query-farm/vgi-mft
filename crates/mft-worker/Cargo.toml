@@ -1,0 +1,28 @@
+[package]
+name = "mft-worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "VGI worker parsing the NTFS $MFT into a forensic filesystem timeline in DuckDB over Apache Arrow"
+
+[[bin]]
+name = "mft-worker"
+path = "src/main.rs"
+
+[dependencies]
+mft-core = { path = "../mft-core" }
+vgi.workspace = true
+vgi-rpc.workspace = true
+arrow-array.workspace = true
+arrow-buffer.workspace = true
+arrow-schema.workspace = true
+glob = "0.3"
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+# The synthetic-$MFT builder for byte-accurate worker fixtures.
+mft-core = { path = "../mft-core", features = ["synth"] }

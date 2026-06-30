@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-test:
+    name: fmt · clippy · build · doc · unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Doc (deny warnings)
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
+
+      - name: Unit + integration tests
+        run: cargo test --workspace --all-features
+
+      - name: Build worker (release)
+        run: cargo build --release --bin mft-worker
+
+  resolve-haybarn:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.r.outputs.release }}
+    steps:
+      - id: r
+        run: |
+          REL=$(gh release view --repo Query-farm-haybarn/haybarn --json tagName --jq .tagName)
+          echo "release=$REL" >> "$GITHUB_OUTPUT"
+          echo "Latest haybarn release: $REL"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  integration:
+    name: SQL E2E (${{ matrix.transport }}) · ${{ matrix.os }}
+    needs: resolve-haybarn
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        transport: [subprocess, http, unix]
+        include:
+          - { os: ubuntu-latest, asset: haybarn_unittest-linux-amd64.zip }
+          - { os: macos-latest,  asset: haybarn_unittest-osx-arm64.zip }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build worker (release)
+        run: cargo build --release --bin mft-worker
+
+      - name: Download haybarn-unittest
+        run: |
+          gh release download "$HAYBARN_RELEASE" \
+            --repo Query-farm-haybarn/haybarn \
+            --pattern '${{ matrix.asset }}' \
+            --output haybarn-unittest.zip --clobber
+          mkdir -p hb && unzip -o -q haybarn-unittest.zip -d hb
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HAYBARN_RELEASE: ${{ needs.resolve-haybarn.outputs.release }}
+
+      - name: Resolve runner + worker paths
+        run: |
+          UNITTEST="$PWD/$(find hb -name 'haybarn-unittest' -type f | head -1)"
+          chmod +x "$UNITTEST"
+          echo "HAYBARN_UNITTEST=$UNITTEST" >> "$GITHUB_ENV"
+          echo "WORKER_BIN=$PWD/target/release/mft-worker" >> "$GITHUB_ENV"
+
+      - name: Run extension integration suite (${{ matrix.transport }})
+        run: ci/run-integration.sh
+        env:
+          TRANSPORT: ${{ matrix.transport }}
+
+  metadata-quality:
+    name: metadata quality (vgi-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build worker (release)
+        run: cargo build --release --bin mft-worker
+
+      - name: vgi-lint
+        uses: Query-farm/vgi-lint-check@v1
+        with:
+          version: "0.37.0"
+          location: "${{ github.workspace }}/target/release/mft-worker"
+          fail-on: info
