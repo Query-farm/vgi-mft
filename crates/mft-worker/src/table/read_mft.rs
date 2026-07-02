@@ -32,6 +32,7 @@ impl TableFunction for ReadMft {
 
     fn metadata(&self) -> FunctionMetadata {
         let mut tags = crate::meta::object_tags(
+            "Timeline",
             "Read $MFT Forensic Timeline",
             "Parse a collected NTFS $MFT (Master File Table) into a full forensic filesystem \
              timeline — one row per FILE record, with the path reconstructed from parent \
@@ -96,9 +97,10 @@ impl TableFunction for ReadMft {
                 "glob_or_blob",
                 0,
                 "any",
-                "The $MFT source: a VARCHAR path or glob (e.g. '/cases/IR-2026/host01/$MFT', \
-                 '/cases/*/$MFT'), or a BLOB of $MFT bytes (e.g. from_hex(...) or a collected dump \
-                 read into a literal). A glob scans matching files in sorted order.",
+                "The $MFT source: a filesystem path or glob (e.g. '/cases/IR-2026/host01/$MFT', \
+                 '/cases/*/$MFT') pointing at collected $MFT files, or the raw $MFT bytes read \
+                 into a literal (e.g. from read_blob(...).content). A glob scans matching files in \
+                 sorted order.",
             ),
             ArgSpec::const_arg(
                 "host",

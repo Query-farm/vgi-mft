@@ -74,6 +74,7 @@ impl ScalarFunction for Timestomp {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Anti-Forensics",
                 "Timestomp Heuristic",
                 "Score the anti-forensic SI-vs-FN timestamp heuristic over a $STANDARD_INFORMATION \
                  MACB quad `si` and a $FILE_NAME MACB quad `fn` (each a STRUCT(created, modified, \
@@ -104,15 +105,15 @@ impl ScalarFunction for Timestomp {
                 "si",
                 0,
                 DataType::Struct(quad_fields()),
-                "The $STANDARD_INFORMATION MACB quad: STRUCT(created, modified, accessed, \
-                 mft_modified) of TIMESTAMP (e.g. built from the read_mft si_* columns).",
+                "The $STANDARD_INFORMATION MACB quad — its created / modified / accessed / \
+                 mft_modified fields (e.g. built from the read_mft si_* columns).",
             ),
             ArgSpec::column_typed(
                 "fn",
                 1,
                 DataType::Struct(quad_fields()),
-                "The $FILE_NAME MACB quad: STRUCT(created, modified, accessed, mft_modified) of \
-                 TIMESTAMP (e.g. built from the read_mft fn_* columns).",
+                "The $FILE_NAME MACB quad — its created / modified / accessed / mft_modified \
+                 fields (e.g. built from the read_mft fn_* columns).",
             ),
         ]
     }

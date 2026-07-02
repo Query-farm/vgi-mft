@@ -2,3 +2,5 @@
 /build
 **/*.rs.bk
 .DS_Store
+# vgi-lint-check LLM caches (doc-review / agent-sim)
+.vgi-*-cache.json

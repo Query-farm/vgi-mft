@@ -40,6 +40,7 @@ impl ScalarFunction for WellFormedFn {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Records",
                 "MFT Record Well-Formed Check",
                 "Validate MFT entry `entry` in a $MFT `blob`, returning a STRUCT(ok BOOLEAN, error \
                  VARCHAR, kind VARCHAR). `kind` is one of ok, baad, fixup-mismatch, bad-signature, \
@@ -59,7 +60,7 @@ impl ScalarFunction for WellFormedFn {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::column_typed("blob", 0, DataType::Binary, "The $MFT bytes (a BLOB)."),
+            ArgSpec::column_typed("blob", 0, DataType::Binary, "The raw $MFT bytes to parse."),
             ArgSpec::column_typed(
                 "entry",
                 1,

@@ -67,17 +67,16 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             (
                 "vgi.doc_llm".to_string(),
                 "Parse a collected NTFS $MFT (Master File Table) into a forensic filesystem \
-                 timeline directly in SQL. `read_mft(path_or_blob, host := …, mode := …)` returns \
-                 one row per FILE record with the full path reconstructed from parent references, \
-                 both the $STANDARD_INFORMATION and $FILE_NAME MACB timestamp quads (so the SI-vs-FN \
-                 timestomp mismatch is a plain WHERE clause), logical/physical sizes, \
-                 allocated/deleted and file/dir flags, alternate data streams, and inline resident \
-                 file content. Deleted-but-resident records are included by default. Scalars over a \
-                 (blob, entry) pair: `mft_record` (full STRUCT decode), `full_path` (path \
-                 reconstruction), `record_header` (header probe), `well_formed` (validate, never \
-                 panics), and `timestomp(si, fn)` (the heuristic with reasons). Relation-in/out \
-                 `attributes` and `streams` fan a record's attributes / $DATA streams into rows. \
-                 No network, no egress — it only ever reads the bytes you collected."
+                 timeline directly in SQL — no per-host CLI run, no network, no egress; it only \
+                 ever reads the bytes you already collected. The $MFT is NTFS's index of every \
+                 file and directory, so parsing it reconstructs full paths from parent references, \
+                 exposes both the user-writable $STANDARD_INFORMATION and the kernel-only \
+                 $FILE_NAME MACB timestamp quads (making an SI-vs-FN timestomp mismatch a plain \
+                 WHERE clause), recovers deleted-but-resident records, and surfaces alternate data \
+                 streams and inline resident file content. Reach for it to timeline thousands of \
+                 collected $MFTs for DFIR, incident response, and threat hunting, and to join the \
+                 result to known-bad paths, hashes, and detection rules. List the schema to \
+                 discover the available functions and their signatures."
                     .to_string(),
             ),
             (
@@ -88,24 +87,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  with **zero egress**. Built for DFIR / incident-response / threat-hunt teams who \
                  want to timeline thousands of collected `$MFT`s and join the result to known-bad \
                  paths, hashes, and rules in one query.\n\n\
-                 The headline `read_mft(path_or_blob, host := …, mode := …)` returns the wide \
-                 timeline: `entry`, `sequence`, `parent_entry`, the reconstructed `full_path`, \
-                 `file_name`, `is_dir` / `is_allocated` / `is_deleted`, the **SI** quad \
-                 (`si_created` / `si_modified` / `si_accessed` / `si_mft_modified`) and the **FN** \
-                 quad (`fn_*`), `logical_size` / `physical_size`, `hard_link_count`, \
-                 `dos_attributes`, `ads_name`, `resident_data`, `is_timestomp_suspect`, and \
-                 `diagnostics`. Deleted-but-resident records are included by default (filter with \
-                 `WHERE is_allocated`).\n\n\
+                 **Key concepts.** The `$MFT` is NTFS's index of every file and directory. Each \
+                 FILE record carries the metadata this worker turns into columns: the full path \
+                 reconstructed by walking parent references, logical and physical sizes, \
+                 allocated / deleted and file / directory flags, alternate data streams, and \
+                 inline resident content. Deleted-but-resident records are recovered by default.\n\n\
                  **The timestomp engine.** `$STANDARD_INFORMATION` is user-writable (the Win32 \
-                 `SetFileTime` API and tools like `timestomp` rewrite it) while `$FILE_NAME` is \
-                 kernel-only, so SI earlier than FN — naturally impossible — and whole-second SI \
-                 values are strong anti-forensic tells. Both quads are first-class columns, and \
-                 `timestomp(si, fn)` scores multiple reasons rather than a single boolean.\n\n\
-                 **Scalars** (over a `(blob, entry)` pair): `mft_record`, `full_path`, \
-                 `record_header`, `well_formed` (never panics on corrupt input), `mft_version`, and \
-                 the `timestomp` heuristic. **Relation-in/out**: `attributes` and `streams` fan a \
-                 record's attributes / `$DATA` streams (primary + each ADS) into rows.\n\n\
-                 Built on the permissively-licensed `mft` crate (omerbenamram). The NTFS on-disk \
+                 `SetFileTime` API and anti-forensic tools rewrite it) while `$FILE_NAME` is \
+                 kernel-only, so a standard-information timestamp that predates its file-name \
+                 counterpart — naturally impossible — and whole-second values are strong \
+                 anti-forensic tells. Both MACB timestamp quads are first-class columns.\n\n\
+                 Built on the permissively-licensed `mft` crate (omerbenamram); the NTFS on-disk \
                  layout is documented openly by Microsoft and the forensics community. Part of the \
                  [Query.Farm](https://query.farm) VGI ecosystem — the seed of a Windows-DFIR bundle \
                  alongside `vgi-evtx` (event logs)."
@@ -114,43 +106,60 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             (
                 "vgi.agent_test_tasks".to_string(),
                 crate::meta::agent_test_tasks_json(&[
-                    (
-                        "worker_version",
-                        "Before relying on the mft worker in a pipeline, record which build is \
-                         attached. Return the worker version string as a single row with one \
-                         column named version.",
-                        "SELECT mft.main.mft_version() AS version",
-                    ),
-                    (
-                        "timeline_row_count",
-                        "Parse the sample $MFT at data/sample.mft and tell me how many FILE records \
-                         it contains. Return one row with a single column named records.",
-                        "SELECT count(*) AS records FROM mft.main.read_mft('data/sample.mft')",
-                    ),
-                    (
-                        "list_deleted_files",
-                        "From the sample $MFT at data/sample.mft, list the names of the deleted \
-                         (not-allocated) non-directory files. Return a column named file_name, \
-                         ordered alphabetically.",
-                        "SELECT file_name FROM mft.main.read_mft('data/sample.mft') WHERE \
-                         is_deleted AND NOT is_dir ORDER BY file_name",
-                    ),
-                    (
-                        "timestomp_hunt",
-                        "Hunt the sample $MFT at data/sample.mft for timestomping: return the \
-                         full_path of every record flagged is_timestomp_suspect. Return a single \
-                         column named full_path ordered alphabetically.",
-                        "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE \
-                         is_timestomp_suspect ORDER BY full_path",
-                    ),
-                    (
-                        "alternate_data_streams",
-                        "Surface every alternate data stream in the sample $MFT at data/sample.mft \
-                         using streams mode. Return the ads name in a column named ads_name for \
-                         rows where ads_name is not null, ordered alphabetically.",
-                        "SELECT ads_name FROM mft.main.read_mft('data/sample.mft', mode := \
-                         'streams') WHERE ads_name IS NOT NULL ORDER BY ads_name",
-                    ),
+                    crate::meta::AgentTask {
+                        name: "worker_version",
+                        prompt: "Before relying on the mft worker in a pipeline, record which \
+                                 build is attached. Return the worker version string as a single \
+                                 row with one column named version.",
+                        reference_sql: "SELECT mft.main.mft_version() AS version",
+                        // Single scalar row; order is irrelevant, values must match.
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "timeline_row_count",
+                        prompt: "Parse the sample $MFT at data/sample.mft and tell me how many \
+                                 FILE records it contains. Return one row with a single column \
+                                 named records.",
+                        reference_sql:
+                            "SELECT count(*) AS records FROM mft.main.read_mft('data/sample.mft')",
+                        // A single count value; tolerate a differently-named column.
+                        unordered: true,
+                        ignore_column_names: true,
+                    },
+                    crate::meta::AgentTask {
+                        name: "list_deleted_files",
+                        prompt: "From the sample $MFT at data/sample.mft, list the names of the \
+                                 deleted (not-allocated) non-directory files. Return a column \
+                                 named file_name, ordered alphabetically.",
+                        reference_sql: "SELECT file_name FROM mft.main.read_mft('data/sample.mft') \
+                                        WHERE is_deleted AND NOT is_dir ORDER BY file_name",
+                        // Reference pins the order with ORDER BY.
+                        unordered: false,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "timestomp_hunt",
+                        prompt: "Hunt the sample $MFT at data/sample.mft for timestomping: return \
+                                 the full_path of every record flagged is_timestomp_suspect. \
+                                 Return a single column named full_path ordered alphabetically.",
+                        reference_sql: "SELECT full_path FROM mft.main.read_mft('data/sample.mft') \
+                                        WHERE is_timestomp_suspect ORDER BY full_path",
+                        unordered: false,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "alternate_data_streams",
+                        prompt: "Surface every alternate data stream in the sample $MFT at \
+                                 data/sample.mft using streams mode. Return the ads name in a \
+                                 column named ads_name for rows where ads_name is not null, \
+                                 ordered alphabetically.",
+                        reference_sql: "SELECT ads_name FROM mft.main.read_mft('data/sample.mft', \
+                                        mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY \
+                                        ads_name",
+                        unordered: false,
+                        ignore_column_names: false,
+                    },
                 ]),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -172,8 +181,8 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
-                "NTFS $MFT parsing: read_mft timeline, per-record scalars, the timestomp \
-                 heuristic, and attribute / stream fan-out."
+                "NTFS $MFT forensics: a filesystem timeline, per-record decode and validation, \
+                 the timestomp heuristic, and attribute / $DATA-stream fan-out."
                     .to_string(),
             ),
             tags: vec![
@@ -181,28 +190,36 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 (
                     "vgi.keywords".to_string(),
                     crate::meta::keywords_json(
-                        "read_mft, mft_record, full_path, timestomp, record_header, well_formed, \
-                         attributes, streams, mft_version, ntfs, $MFT, dfir, timeline",
+                        "ntfs, $MFT, master file table, dfir, forensics, incident response, \
+                         threat hunt, timeline, timestomp, MACB, deleted files, alternate data \
+                         stream, ADS, path reconstruction, windows",
                     ),
                 ),
                 ("domain".to_string(), "security-and-forensics".to_string()),
-                ("category".to_string(), "digital-forensics".to_string()),
                 ("topic".to_string(), "ntfs-mft-timeline".to_string()),
                 (
+                    "vgi.categories".to_string(),
+                    crate::meta::CATEGORIES_JSON.to_string(),
+                ),
+                (
                     "vgi.doc_llm".to_string(),
-                    "NTFS $MFT functions: `read_mft` (forensic timeline, one row per FILE record), \
-                     `mft_record` / `full_path` / `record_header` / `well_formed` scalars over a \
-                     (blob, entry) pair, `timestomp(si, fn)` (the SI-vs-FN heuristic), \
-                     `mft_version`, and the `attributes` / `streams` relation-in/out fan-outs."
+                    "The single schema for the mft worker (qualify calls as \
+                     `mft.main.<fn>(...)`). It turns a collected NTFS $MFT into a forensic \
+                     filesystem timeline: full-path reconstruction from parent references, the \
+                     SI-vs-FN MACB timestomp heuristic, deleted-record recovery, per-record decode \
+                     and never-panic validation, and attribute / $DATA-stream fan-out. List the \
+                     schema to discover the available functions and their signatures."
                         .to_string(),
                 ),
                 (
                     "vgi.doc_md".to_string(),
                     "The single schema for the `mft` worker — qualify calls as \
-                     `mft.main.<fn>(...)`. It holds the `read_mft` timeline table function, the \
-                     per-record scalars (`mft_record`, `full_path`, `record_header`, \
-                     `well_formed`, `mft_version`), the `timestomp` heuristic scalar, and the \
-                     `attributes` / `streams` relation-in/out fan-outs."
+                     `mft.main.<fn>(...)`. It turns a collected NTFS `$MFT` into a forensic \
+                     filesystem timeline: full paths reconstructed from parent references, the \
+                     user-writable-SI vs kernel-only-FN MACB timestomp heuristic, deleted-record \
+                     recovery, per-record decode and never-panic validation, and attribute / \
+                     `$DATA`-stream fan-out. List the schema to discover the available functions \
+                     and their signatures."
                         .to_string(),
                 ),
                 (

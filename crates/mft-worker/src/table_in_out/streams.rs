@@ -66,16 +66,18 @@ impl TableInOutFunction for Streams {
 
     fn metadata(&self) -> FunctionMetadata {
         let mut tags = crate::meta::object_tags(
+            "Attributes & Streams",
             "MFT $DATA Streams (LATERAL)",
             "Fan every $DATA stream of each ($MFT blob, entry) row of the input relation into one \
              output row: the unnamed primary stream (name NULL) plus each alternate data stream \
              (ADS, name set). Columns: entry, name, logical_size, physical_size, resident, and \
              data (the resident bytes when the stream is resident, else NULL). ADS are a classic \
-             malware hiding spot. Pass a relation with a `blob` BLOB column and an `entry` UBIGINT \
-             column (DuckDB table functions cannot take correlated column args).",
-            "Fan every $DATA stream (primary + each ADS) of each (blob, entry) row into rows: \
-             `FROM mft.streams((FROM (SELECT blob, entry)))` → (entry, name, logical_size, \
-             physical_size, resident, data).",
+             malware hiding spot. Pass a relation with a `blob` column of $MFT bytes and an \
+             `entry` column of record indexes (DuckDB table functions cannot take correlated \
+             column args).",
+            "Fan every $DATA stream (primary + each ADS) of each (blob, entry) row into rows — \
+             (entry, name, logical_size, physical_size, resident, data):\n\n\
+             ```sql\nFROM mft.streams((FROM (SELECT blob, entry)))\n```",
             "streams, $DATA, alternate data stream, ADS, resident, malware hiding, mft, ntfs, \
              lateral",
         );
@@ -117,8 +119,8 @@ impl TableInOutFunction for Streams {
             "relation",
             0,
             "table",
-            "A relation carrying a `blob` BLOB column ($MFT bytes) and an `entry` UBIGINT column \
-             (the record index to expand).",
+            "A relation carrying a `blob` column of $MFT bytes and an `entry` column of record \
+             indexes to expand.",
         )]
     }
 

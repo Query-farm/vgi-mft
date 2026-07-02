@@ -48,6 +48,7 @@ impl ScalarFunction for FullPath {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Records",
                 "Reconstruct MFT Path",
                 "Reconstruct the full filesystem path of MFT entry `entry` in a $MFT `blob` by \
                  walking parent references up to the volume root. Returns `\\$Orphan\\…` when a \
@@ -66,7 +67,7 @@ impl ScalarFunction for FullPath {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::column_typed("blob", 0, DataType::Binary, "The $MFT bytes (a BLOB)."),
+            ArgSpec::column_typed("blob", 0, DataType::Binary, "The raw $MFT bytes to parse."),
             ArgSpec::column_typed(
                 "entry",
                 1,

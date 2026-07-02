@@ -46,6 +46,7 @@ impl ScalarFunction for RecordHeaderFn {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Records",
                 "MFT Record Header",
                 "Decode just the FILE-record header of MFT entry `entry` in a $MFT `blob`: the \
                  signature ('FILE'/'BAAD'), sequence number, IN_USE and DIRECTORY flags, base \
@@ -63,7 +64,7 @@ impl ScalarFunction for RecordHeaderFn {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::column_typed("blob", 0, DataType::Binary, "The $MFT bytes (a BLOB)."),
+            ArgSpec::column_typed("blob", 0, DataType::Binary, "The raw $MFT bytes to parse."),
             ArgSpec::column_typed(
                 "entry",
                 1,

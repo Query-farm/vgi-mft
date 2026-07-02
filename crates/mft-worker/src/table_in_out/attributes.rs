@@ -89,16 +89,17 @@ impl TableInOutFunction for Attributes {
 
     fn metadata(&self) -> FunctionMetadata {
         let mut tags = crate::meta::object_tags(
+            "Attributes & Streams",
             "MFT Attributes (LATERAL)",
             "Fan every attribute of each ($MFT blob, entry) row of the input relation into one \
              output row: attribute_id, type_id, type_name (e.g. $STANDARD_INFORMATION, \
              $FILE_NAME, $DATA), resident flag, name (an ADS name when present), logical/physical \
              size, and flags. The mft_dump-style deep per-attribute view. Pass a relation with a \
-             `blob` BLOB column and an `entry` UBIGINT column (DuckDB table functions cannot take \
-             correlated column args, so the relation form is used).",
-            "Fan every attribute of each (blob, entry) row into rows: \
-             `FROM mft.attributes((FROM (SELECT blob, entry)))` → (entry, attribute_id, type_id, \
-             type_name, resident, name, logical_size, physical_size, flags).",
+             `blob` column of $MFT bytes and an `entry` column of record indexes (DuckDB table \
+             functions cannot take correlated column args, so the relation form is used).",
+            "Fan every attribute of each (blob, entry) row into rows — (entry, attribute_id, \
+             type_id, type_name, resident, name, logical_size, physical_size, flags):\n\n\
+             ```sql\nFROM mft.attributes((FROM (SELECT blob, entry)))\n```",
             "attributes, mft attributes, attribute list, type_id, resident, non-resident, deep \
              view, mft_dump, ntfs, lateral",
         );
@@ -140,8 +141,8 @@ impl TableInOutFunction for Attributes {
             "relation",
             0,
             "table",
-            "A relation carrying a `blob` BLOB column ($MFT bytes) and an `entry` UBIGINT column \
-             (the record index to expand).",
+            "A relation carrying a `blob` column of $MFT bytes and an `entry` column of record \
+             indexes to expand.",
         )]
     }
 

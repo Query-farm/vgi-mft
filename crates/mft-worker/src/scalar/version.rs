@@ -28,6 +28,7 @@ impl ScalarFunction for MftVersion {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Diagnostics",
                 "MFT Worker Version",
                 "Return the version string of the running mft worker — useful to record which \
                  build parsed an evidence set in a chain-of-custody note.",

@@ -30,6 +30,7 @@ impl ScalarFunction for MftRecord {
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
+                "Records",
                 "Decode MFT Record",
                 "Fully decode MFT entry `entry` in a $MFT `blob` into a STRUCT carrying the header \
                  (entry, sequence, in_use, is_dir, base_ref, lsn, hard_links), the \
@@ -51,7 +52,7 @@ impl ScalarFunction for MftRecord {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::column_typed("blob", 0, DataType::Binary, "The $MFT bytes (a BLOB)."),
+            ArgSpec::column_typed("blob", 0, DataType::Binary, "The raw $MFT bytes to parse."),
             ArgSpec::column_typed(
                 "entry",
                 1,
