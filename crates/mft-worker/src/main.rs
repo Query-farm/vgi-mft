@@ -213,13 +213,25 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ),
                 (
                     "vgi.doc_md".to_string(),
-                    "The single schema for the `mft` worker — qualify calls as \
-                     `mft.main.<fn>(...)`. It turns a collected NTFS `$MFT` into a forensic \
-                     filesystem timeline: full paths reconstructed from parent references, the \
-                     user-writable-SI vs kernel-only-FN MACB timestomp heuristic, deleted-record \
-                     recovery, per-record decode and never-panic validation, and attribute / \
-                     `$DATA`-stream fan-out. List the schema to discover the available functions \
-                     and their signatures."
+                    "## The `mft` worker\n\n\
+                     Turns a collected NTFS `$MFT` into a forensic filesystem timeline you can \
+                     query with SQL. Point it at a captured `$MFT` — a path, a glob across many \
+                     hosts, or an in-memory `BLOB` — and it reconstructs what the filesystem \
+                     looked like, and what was tampered with. Qualify calls as \
+                     `mft.main.<fn>(...)`.\n\n\
+                     **Key concepts**\n\n\
+                     - *Path reconstruction* — parent-reference walking rebuilds absolute paths, \
+                     flagging orphans and reference cycles.\n\
+                     - *MACB timelines* — the `$STANDARD_INFORMATION` and `$FILE_NAME` timestamp \
+                     quads surfaced side by side.\n\
+                     - *Timestomp heuristic* — the user-writable-SI vs kernel-only-FN comparison \
+                     that flags manipulated timestamps.\n\
+                     - *Recovery & robustness* — deleted-record recovery and never-panic decode \
+                     over hostile or truncated input, plus attribute and `$DATA` / alternate-data-\
+                     stream fan-out.\n\n\
+                     **When to use it** — DFIR triage, threat hunting, and incident response over \
+                     Windows hosts. List the schema to discover the available functions and their \
+                     signatures."
                         .to_string(),
                 ),
                 (
