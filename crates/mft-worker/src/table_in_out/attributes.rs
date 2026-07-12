@@ -97,19 +97,18 @@ impl TableInOutFunction for Attributes {
              size, and flags. The mft_dump-style deep per-attribute view. Pass a relation with a \
              `blob` column of $MFT bytes and an `entry` column of record indexes (DuckDB table \
              functions cannot take correlated column args, so the relation form is used).",
-            "Fan every attribute of each (blob, entry) row into rows — (entry, attribute_id, \
-             type_id, type_name, resident, name, logical_size, physical_size, flags):\n\n\
-             ```sql\nFROM mft.attributes((FROM (SELECT blob, entry)))\n```",
+            "Fan every attribute of each `(blob, entry)` input row into one output row — columns \
+             `entry`, `attribute_id`, `type_id`, `type_name` (e.g. `$STANDARD_INFORMATION`, \
+             `$FILE_NAME`, `$DATA`), `resident`, `name` (an ADS name when present), `logical_size`, \
+             `physical_size`, and `flags`. Pass a relation carrying a `blob` column of $MFT bytes \
+             and an `entry` column of record numbers; the `ntfs_attribute_types` view maps each \
+             `type_id` to its meaning. See the example queries for ready-to-run SQL.",
             "attributes, mft attributes, attribute list, type_id, resident, non-resident, deep \
              view, mft_dump, ntfs, lateral",
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "One row per attribute of each input `(blob, entry)`: `entry` (UBIGINT), \
-             `attribute_id` (USMALLINT), `type_id` (UINTEGER), `type_name` (VARCHAR), `resident` \
-             (BOOLEAN), `name` (VARCHAR, e.g. an ADS name), `logical_size` / `physical_size` \
-             (UBIGINT), `flags` (UINTEGER)."
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&output_schema()),
         ));
         tags.push((
             "vgi.example_queries".into(),

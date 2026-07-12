@@ -10,6 +10,64 @@
 //! Per-object `vgi.source_url` is intentionally NOT emitted here: `vgi.source_url`
 //! belongs on the catalog object only (VGI139).
 
+use arrow_schema::{DataType, Schema, TimeUnit};
+
+/// Map an Arrow `DataType` to the DuckDB type name `DESCRIBE` reports for it, for
+/// the column types this worker actually emits. Keeps the declared
+/// `vgi.result_columns_schema` types identical to what the function returns
+/// (VGI910), sourced from the same Arrow schema so they cannot drift.
+fn duckdb_type_name(dt: &DataType) -> &'static str {
+    match dt {
+        DataType::Utf8 | DataType::LargeUtf8 => "VARCHAR",
+        DataType::Binary | DataType::LargeBinary => "BLOB",
+        DataType::Boolean => "BOOLEAN",
+        DataType::UInt8 => "UTINYINT",
+        DataType::UInt16 => "USMALLINT",
+        DataType::UInt32 => "UINTEGER",
+        DataType::UInt64 => "UBIGINT",
+        DataType::Int8 => "TINYINT",
+        DataType::Int16 => "SMALLINT",
+        DataType::Int32 => "INTEGER",
+        DataType::Int64 => "BIGINT",
+        DataType::Timestamp(TimeUnit::Microsecond, None) => "TIMESTAMP",
+        // Only the types above are emitted by this worker's table functions; any
+        // future type must be added here so the declared schema stays exact.
+        _ => "VARCHAR",
+    }
+}
+
+/// Build the structured `vgi.result_columns_schema` (VGI307; migrated from the
+/// retired `vgi.result_columns_md`, VGI414) as a JSON array of
+/// `{name, type, description}` — one entry per output column, its `type` the
+/// DuckDB type and its `description` sourced from the field's `comment` metadata.
+/// Generating it from the function's own output Arrow schema guarantees the
+/// declared schema matches the emitted columns (VGI910) and never drifts.
+pub fn result_columns_schema_json(schema: &Schema) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+    }
+    let items: Vec<String> = schema
+        .fields()
+        .iter()
+        .map(|f| {
+            let desc = f
+                .metadata()
+                .get("comment")
+                .map(String::as_str)
+                .unwrap_or("");
+            format!(
+                "{{\"name\":\"{}\",\"type\":\"{}\",\"description\":\"{}\"}}",
+                esc(f.name()),
+                duckdb_type_name(f.data_type()),
+                esc(desc),
+            )
+        })
+        .collect();
+    format!("[{}]", items.join(","))
+}
+
 /// The schema's `vgi.categories` navigation registry (VGI413): an ordered JSON
 /// array of `{"name","description"}`. Every object's `vgi.category` must name one
 /// of these (VGI409), and every category must own at least one object (VGI412).

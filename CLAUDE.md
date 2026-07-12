@@ -84,7 +84,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --all --check
 cargo test --workspace --all-features
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
-# metadata: uvx --from vgi-lint-check@0.37.0 vgi-lint lint <bin> --config vgi-lint.toml --fail-on info
+# metadata: uvx --prerelease=allow --from vgi-lint-check vgi-lint lint <bin> --execute --ai --ai-concurrency 1 --fail-on info
 # SQL E2E: ci/run-integration.sh over TRANSPORT=subprocess|http|unix
 ```
 

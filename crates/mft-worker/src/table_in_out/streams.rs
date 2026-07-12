@@ -75,19 +75,19 @@ impl TableInOutFunction for Streams {
              malware hiding spot. Pass a relation with a `blob` column of $MFT bytes and an \
              `entry` column of record indexes (DuckDB table functions cannot take correlated \
              column args).",
-            "Fan every $DATA stream (primary + each ADS) of each (blob, entry) row into rows — \
-             (entry, name, logical_size, physical_size, resident, data):\n\n\
-             ```sql\nFROM mft.streams((FROM (SELECT blob, entry)))\n```",
+            "Fan every $DATA stream (the unnamed primary stream plus each alternate data stream) of \
+             each `(blob, entry)` input row into one output row — columns `entry`, `name` (NULL for \
+             the primary stream, set for an ADS), `logical_size`, `physical_size`, `resident`, and \
+             `data` (the resident bytes when the stream is resident, else NULL). Alternate data \
+             streams are a classic malware hiding spot. Pass a relation carrying a `blob` column of \
+             $MFT bytes and an `entry` column of record numbers. See the example queries for \
+             ready-to-run SQL.",
             "streams, $DATA, alternate data stream, ADS, resident, malware hiding, mft, ntfs, \
              lateral",
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "One row per `$DATA` stream of each input `(blob, entry)`: `entry` (UBIGINT), `name` \
-             (VARCHAR — NULL for the primary stream, set for an ADS), `logical_size` / \
-             `physical_size` (UBIGINT), `resident` (BOOLEAN), `data` (BLOB — resident bytes when \
-             resident, else NULL)."
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(&output_schema()),
         ));
         tags.push((
             "vgi.example_queries".into(),

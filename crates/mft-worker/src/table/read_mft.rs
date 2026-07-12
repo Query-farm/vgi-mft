@@ -54,15 +54,8 @@ impl TableFunction for ReadMft {
              incident response, threat hunt",
         );
         tags.push((
-            "vgi.result_columns_md".into(),
-            "One row per FILE record (allocated **and** deleted-but-resident). Key columns: \
-             `entry` (UBIGINT), `sequence` (USMALLINT), `parent_entry`, `full_path`, `file_name`, \
-             `is_dir`, `is_allocated`, `is_deleted`, the SI quad `si_created`/`si_modified`/\
-             `si_accessed`/`si_mft_modified` and the FN quad `fn_created`/`fn_modified`/\
-             `fn_accessed`/`fn_mft_modified` (all TIMESTAMP), `logical_size`, `physical_size`, \
-             `hard_link_count`, `dos_attributes`, `ads_name`, `resident_data` (BLOB), \
-             `is_timestomp_suspect` (BOOLEAN), and `diagnostics`."
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema_json(crate::arrow_map::timeline_schema().as_ref()),
         ));
         tags.push((
             "vgi.example_queries".into(),
@@ -97,10 +90,12 @@ impl TableFunction for ReadMft {
                 "glob_or_blob",
                 0,
                 "any",
-                "The $MFT source: a filesystem path or glob (e.g. '/cases/IR-2026/host01/$MFT', \
-                 '/cases/*/$MFT') pointing at collected $MFT files, or the raw $MFT bytes read \
-                 into a literal (e.g. from read_blob(...).content). A glob scans matching files in \
-                 sorted order.",
+                "The $MFT source. Either a filesystem path to one collected $MFT file (for example \
+                 a path like '/cases/IR-2026/host01/$MFT') or a shell-style glob that expands to \
+                 many collected files scanned in sorted order (a pattern such as '/cases/*/$MFT'); \
+                 or the raw $MFT bytes supplied inline as a literal BLOB, e.g. from \
+                 read_blob(...).content. This is a free-form path/pattern/BLOB, not a fixed \
+                 vocabulary.",
             ),
             ArgSpec::const_arg(
                 "host",
@@ -114,10 +109,15 @@ impl TableFunction for ReadMft {
                 "mode",
                 -1,
                 "varchar",
-                "Emission mode: 'files' (one row per record using the primary stream, the \
-                 default), 'streams' (one row per $DATA stream — primary + each ADS, each \
-                 independently joinable), or 'allocated' (live/undeleted files only).",
-            ),
+                "Emission mode. 'files' emits one row per record using the primary stream (the \
+                 default); 'streams' emits one row per $DATA stream, the primary plus each ADS, \
+                 each independently joinable; 'allocated' emits live/undeleted files only.",
+            )
+            // A genuinely closed vocabulary, sourced from the same set `Mode::parse`
+            // accepts — declared as `choices` (VGI317) so agents discover the valid
+            // modes, with 'files' the default.
+            .with_choices(["files", "streams", "allocated"])
+            .with_default("files"),
         ]
     }
 

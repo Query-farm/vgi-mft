@@ -31,7 +31,7 @@ mod scalar;
 mod table;
 mod table_in_out;
 
-use vgi::catalog::{CatSchema, CatalogModel};
+use vgi::catalog::{CatSchema, CatView, CatalogModel};
 use vgi::Worker;
 
 /// Worker version string, surfaced by `mft_version()`.
@@ -160,6 +160,99 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         unordered: false,
                         ignore_column_names: false,
                     },
+                    crate::meta::AgentTask {
+                        name: "reconstruct_path",
+                        prompt: "In the sample $MFT at data/sample.mft, reconstruct the full \
+                                 filesystem path of MFT record 20. Return one row with a single \
+                                 column named path.",
+                        reference_sql: "SELECT mft.main.full_path((SELECT content FROM \
+                                        read_blob('data/sample.mft')), 20) AS path",
+                        // A single deterministic path string.
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "decode_record_ads",
+                        prompt: "Fully decode MFT record 22 in the sample $MFT at data/sample.mft \
+                                 and tell me how many alternate data streams (ADS) it carries. \
+                                 Return one row with a single column named ads_count.",
+                        reference_sql: "SELECT len(mft.main.mft_record((SELECT content FROM \
+                                        read_blob('data/sample.mft')), 22).ads) AS ads_count",
+                        // A single count; tolerate a differently-named column.
+                        unordered: true,
+                        ignore_column_names: true,
+                    },
+                    crate::meta::AgentTask {
+                        name: "probe_header_is_dir",
+                        prompt: "Probe just the FILE-record header of MFT record 12 in the sample \
+                                 $MFT at data/sample.mft. Is it a directory? Return one row with a \
+                                 single boolean column named is_dir.",
+                        reference_sql: "SELECT mft.main.record_header((SELECT content FROM \
+                                        read_blob('data/sample.mft')), 12).is_dir AS is_dir",
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "validate_record",
+                        prompt: "Validate MFT record 20 in the sample $MFT at data/sample.mft. Is \
+                                 the record well-formed? Return one row with a single boolean \
+                                 column named ok.",
+                        reference_sql: "SELECT mft.main.well_formed((SELECT content FROM \
+                                        read_blob('data/sample.mft')), 20).ok AS ok",
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "timestomp_heuristic",
+                        prompt: "Using the timestomp heuristic, decide whether a record whose \
+                                 $STANDARD_INFORMATION timestamps are all 2009-01-01 while its \
+                                 $FILE_NAME timestamps are all 2020-01-01 is a timestomp suspect \
+                                 (its SI predates its FN). Return one row with a single boolean \
+                                 column named suspect.",
+                        reference_sql: "SELECT mft.main.timestomp({'created': TIMESTAMP \
+                                        '2009-01-01', 'modified': TIMESTAMP '2009-01-01', \
+                                        'accessed': TIMESTAMP '2009-01-01', 'mft_modified': \
+                                        TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', \
+                                        'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP \
+                                        '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect \
+                                        AS suspect",
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "count_record_attributes",
+                        prompt: "In the sample $MFT at data/sample.mft, count how many NTFS \
+                                 attributes MFT record 22 has. Return one row with a single column \
+                                 named attribute_count.",
+                        reference_sql: "SELECT count(*) AS attribute_count FROM \
+                                        mft.main.attributes((FROM (SELECT content AS blob, \
+                                        22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))",
+                        // A single count; tolerate a differently-named column.
+                        unordered: true,
+                        ignore_column_names: true,
+                    },
+                    crate::meta::AgentTask {
+                        name: "detect_alternate_data_stream",
+                        prompt: "In the sample $MFT at data/sample.mft, determine whether MFT \
+                                 record 22 has an alternate data stream — a $DATA stream whose name \
+                                 is not null. Return one row with a single boolean column named \
+                                 has_ads.",
+                        reference_sql: "SELECT count(*) FILTER (WHERE name IS NOT NULL) > 0 AS \
+                                        has_ads FROM mft.main.streams((FROM (SELECT content AS blob, \
+                                        22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))",
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
+                    crate::meta::AgentTask {
+                        name: "attribute_type_lookup",
+                        prompt: "Using the NTFS attribute-type reference table, look up the \
+                                 canonical attribute name for attribute type id 128. Return one row \
+                                 with a single column named type_name.",
+                        reference_sql: "SELECT type_name FROM mft.main.ntfs_attribute_types WHERE \
+                                        type_id = 128",
+                        unordered: true,
+                        ignore_column_names: false,
+                    },
                 ]),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -245,11 +338,122 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         .to_string(),
                 ),
             ],
-            views: Vec::new(),
+            views: vec![attribute_types_view()],
             macros: Vec::new(),
             tables: Vec::new(),
         }],
         ..Default::default()
+    }
+}
+
+/// A curated, browsable reference view (VGI146): the NTFS attribute-type registry.
+///
+/// A worker that exposes only table functions makes an agent guess arguments
+/// before it can see any data. This VALUES-backed view is a real, browsable
+/// relation — no `$MFT`, no arguments, no network or credential — that documents
+/// the vocabulary behind the `type_id` / `type_name` columns of the `attributes()`
+/// function. Being VALUES-backed (not a wrapper over a parameterless table
+/// function) it satisfies VGI146 without tripping VGI145, and it scans instantly,
+/// clearing VGI911/VGI903 for free.
+fn attribute_types_view() -> CatView {
+    CatView {
+        name: "ntfs_attribute_types".to_string(),
+        // `type_id` is cast to UINTEGER in the first row so the view column type
+        // matches the `type_id` column the attributes() function emits (VGI205).
+        definition: r#"SELECT * FROM (VALUES
+  (16::UINTEGER, '$STANDARD_INFORMATION', 'Standard information: the SI MACB timestamp quad, DOS file attributes, USN, and quota/security ids. User-writable, so it is what the timestomp heuristic watches.'),
+  (32, '$ATTRIBUTE_LIST', 'A pointer list to attributes held in other FILE records, used when a single record overflows.'),
+  (48, '$FILE_NAME', 'A name (Win32, DOS 8.3, or POSIX namespace), the parent-directory reference used to reconstruct paths, and the kernel-only FN MACB quad.'),
+  (64, '$OBJECT_ID', 'The 64-bit object id / distributed-link-tracking GUID.'),
+  (80, '$SECURITY_DESCRIPTOR', 'A per-file security descriptor (modern volumes centralize these in the $Secure metafile).'),
+  (96, '$VOLUME_NAME', 'The volume label (carried by the $Volume metadata file).'),
+  (112, '$VOLUME_INFORMATION', 'The NTFS version and the volume dirty/state flags (carried by $Volume).'),
+  (128, '$DATA', 'File content: the unnamed primary stream plus any named alternate data streams (ADS).'),
+  (144, '$INDEX_ROOT', 'The resident root of a B-tree index — directory entries and other indexes.'),
+  (160, '$INDEX_ALLOCATION', 'The non-resident B-tree blocks of a large index, such as a big directory.'),
+  (176, '$BITMAP', 'An allocation bitmap for the $MFT itself or for an index allocation.'),
+  (192, '$REPARSE_POINT', 'Reparse data: symbolic links, junctions, mount points, and filter-driver tags.'),
+  (208, '$EA_INFORMATION', 'Size and packing metadata for extended attributes.'),
+  (224, '$EA', 'Extended-attribute name/value pairs (OS/2 and application metadata).'),
+  (256, '$LOGGED_UTILITY_STREAM', 'A logged stream used by EFS ($EFS encryption metadata) and other utilities.')
+) AS t(type_id, type_name, purpose)"#
+            .to_string(),
+        comment: Some(
+            "Reference registry mapping each NTFS attribute type code to its canonical name and \
+             purpose — the vocabulary behind the `type_id` / `type_name` columns of the \
+             attributes() function. A static, credential-free lookup you can browse or join."
+                .to_string(),
+        ),
+        tags: vec![
+            ("vgi.category".to_string(), "Attributes & Streams".to_string()),
+            (
+                "vgi.title".to_string(),
+                "NTFS Attribute Type Reference".to_string(),
+            ),
+            ("domain".to_string(), "security-and-forensics".to_string()),
+            ("topic".to_string(), "ntfs-attribute-types".to_string()),
+            (
+                "vgi.keywords".to_string(),
+                crate::meta::keywords_json(
+                    "ntfs attribute types, attribute type code, type_id, type_name, \
+                     $STANDARD_INFORMATION, $FILE_NAME, $DATA, $INDEX_ROOT, $REPARSE_POINT, \
+                     reference, registry, lookup, mft",
+                ),
+            ),
+            (
+                "vgi.doc_llm".to_string(),
+                "A browsable reference table (no arguments, no $MFT needed) listing the fifteen \
+                 standard NTFS attribute type codes with their canonical `$`-prefixed name and a \
+                 one-line purpose. Columns: `type_id` (UINTEGER, e.g. 128), `type_name` (VARCHAR, \
+                 e.g. `$DATA`), `purpose` (VARCHAR). It is the vocabulary behind the `type_id` and \
+                 `type_name` columns of the attributes() function — join or filter it to explain a \
+                 record's attributes without parsing bytes. Type codes are the on-disk NTFS values \
+                 (16 = 0x10 = $STANDARD_INFORMATION, 48 = 0x30 = $FILE_NAME, 128 = 0x80 = $DATA)."
+                    .to_string(),
+            ),
+            (
+                "vgi.doc_md".to_string(),
+                "# `ntfs_attribute_types`\n\n\
+                 A static, browsable reference of the fifteen standard NTFS attribute type codes — \
+                 the vocabulary behind the `type_id` / `type_name` columns of the `attributes()` \
+                 function. No arguments, no `$MFT`, no network.\n\n\
+                 ## Columns\n\n\
+                 - `type_id` (UINTEGER) -- the on-disk NTFS attribute type code, e.g. `128` \
+                 (`0x80`).\n\
+                 - `type_name` (VARCHAR) -- the canonical `$`-prefixed name, e.g. `$DATA`.\n\
+                 - `purpose` (VARCHAR) -- a one-line description of what the attribute stores.\n\n\
+                 Join it to the `attributes()` output on `type_id` to label each attribute, or \
+                 browse it on its own. See the example queries for ready-to-run SQL."
+                    .to_string(),
+            ),
+            (
+                "vgi.example_queries".to_string(),
+                r#"[
+  {"description": "Browse the whole NTFS attribute-type registry, lowest code first.",
+   "sql": "SELECT type_id, type_name, purpose FROM mft.main.ntfs_attribute_types ORDER BY type_id"},
+  {"description": "Look up the name and purpose of attribute type 128 (the $DATA attribute).",
+   "sql": "SELECT type_name, purpose FROM mft.main.ntfs_attribute_types WHERE type_id = 128"}
+]"#
+                .to_string(),
+            ),
+        ],
+        column_comments: vec![
+            (
+                "type_id".to_string(),
+                "The on-disk NTFS attribute type code (the same value the attributes() function \
+                 reports in its `type_id` column), e.g. 128 = $DATA."
+                    .to_string(),
+            ),
+            (
+                "type_name".to_string(),
+                "The canonical attribute name, e.g. $STANDARD_INFORMATION, $FILE_NAME, $DATA."
+                    .to_string(),
+            ),
+            (
+                "purpose".to_string(),
+                "What the attribute stores and what it is used for in NTFS.".to_string(),
+            ),
+        ],
     }
 }
 
