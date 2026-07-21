@@ -1,0 +1,91 @@
+# Copyright 2026 Query Farm LLC - https://query.farm
+#
+# Build and publish the multi-arch vgi-mft image to ghcr.io. The heavy lifting
+# (multi-arch build -> per-arch /health boot smoke -> image SQL suite -> push ->
+# manifest -> cosign-sign) lives in the shared reusable workflow
+# Query-farm/vgi-actions; this file gates on the repo's own CI suite and supplies
+# the worker-specific inputs.
+#
+# Tag-driven: vX.Y.Z -> :X.Y.Z/:X.Y/:latest, push to main -> :edge. Publishing a
+# GitHub Release creates the tag, which fires this too.
+name: Publish image to ghcr.io
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Gate every image on the full unit + vgi-extension integration suite, so a
+  # broken worker is never imaged.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: [ci]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    uses: Query-farm/vgi-actions/.github/workflows/docker-publish.yml@v1
+    secrets: inherit
+    with:
+      image_name: vgi-mft
+      # Rust binary — nothing to `import`, so the language-import smoke is skipped.
+      # The reusable workflow still runs its dual-arch HTTP /health boot smoke.
+      smoke_import: ""
+      health_port: "8000"
+      version_check_cmd: "ci/check-version.sh"
+      # Validate the built image's transports against the signed vgi extension.
+      # The worker *logic* is already exercised every run by the gating `ci` job
+      # (all test/sql/*, three transports, two OSes), so here we only prove the
+      # IMAGE's entrypoints speak the protocol:
+      #   - stdio: smoke the scalars suite through `docker run … stdio`. It is
+      #            mostly BLOB-driven (read_blob() runs on the runner and ships the
+      #            bytes over Arrow), but its timestomp check calls read_mft('<path>')
+      #            which the WORKER opens — so the data/ dir is bind-mounted into the
+      #            spawned container at the SAME absolute path run-integration.sh
+      #            advertises as VGI_MFT_DATA ($PWD/data).
+      #   - HTTP : the FULL suite against a SINGLE warm container. timeline.test
+      #            calls read_mft('<path>'), which the WORKER opens, so the data/
+      #            dir is likewise bind-mounted at that same absolute path, and the
+      #            resume cursor / path reconstruction run end-to-end in-image.
+      # $CITEST_IMAGE is the loaded <image>:citest-amd64 ref; GH_TOKEN is provided
+      # for the download.
+      image_test: |
+        echo "::group::download haybarn-unittest"
+        REL=$(gh release view --repo Query-farm-haybarn/haybarn --json tagName --jq .tagName)
+        gh release download "$REL" --repo Query-farm-haybarn/haybarn \
+          --pattern 'haybarn_unittest-linux-amd64.zip' --output hb.zip --clobber
+        mkdir -p hb && unzip -o -q hb.zip -d hb
+        export HAYBARN_UNITTEST="$PWD/$(find hb -name 'haybarn-unittest' -type f | head -1)"
+        chmod +x "$HAYBARN_UNITTEST"
+        echo "::endgroup::"
+
+        echo "::group::stdio entrypoint smoke (scalars suite, cold container per ATTACH)"
+        # data/ is mounted at the SAME absolute path run-integration.sh exports as
+        # VGI_MFT_DATA ($PWD/data) so the timestomp block's read_mft('<path>')
+        # resolves inside the spawned worker container.
+        TRANSPORT=subprocess \
+          TEST_PATTERN="test/sql/scalars.test" \
+          VGI_MFT_WORKER="docker run -i --rm -v $PWD/data:$PWD/data:ro $CITEST_IMAGE stdio" \
+          ci/run-integration.sh
+        echo "::endgroup::"
+
+        echo "::group::full SQL suite — HTTP transport (one warm container)"
+        # read_mft('<path>') is opened worker-side, so mount data/ at the SAME
+        # absolute path run-integration.sh exports as VGI_MFT_DATA ($PWD/data).
+        CID=$(docker run -d -p 18000:8000 -v "$PWD/data:$PWD/data:ro" "$CITEST_IMAGE")
+        trap 'docker rm -f "$CID" >/dev/null 2>&1 || true' EXIT
+        for _ in $(seq 1 30); do curl -fsS -o /dev/null http://localhost:18000/health && break; sleep 1; done
+        TRANSPORT=http VGI_MFT_WORKER="http://localhost:18000" ci/run-integration.sh
+        echo "::endgroup::"
