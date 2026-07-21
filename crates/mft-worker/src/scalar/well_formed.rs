@@ -35,24 +35,27 @@ impl ScalarFunction for WellFormedFn {
             description: "Validate one $MFT record; never panics on corrupt input".into(),
             return_type: Some(DataType::Struct(fields())),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20);".into(),
-                description: "Validate MFT entry 20.".into(),
+                sql: "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20) AS w)".into(),
+                description: "Validate one sample record (entry 20) — a clean record reports ok = true with kind 'ok'.".into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
                 "Records",
                 "MFT Record Well-Formed Check",
-                "Validate MFT entry `entry` in a $MFT `blob`, returning a STRUCT(ok BOOLEAN, error \
-                 VARCHAR, kind VARCHAR). `kind` is one of ok, baad, fixup-mismatch, bad-signature, \
+                "Validate MFT entry `entry` in a $MFT `blob`, returning a `STRUCT(ok BOOLEAN, error \
+                 VARCHAR, kind VARCHAR)`. `kind` is one of ok, baad, fixup-mismatch, bad-signature, \
                  attr-overrun, truncated, not-an-mft. Never panics — a corrupt or hostile record \
                  returns ok=false with the matching kind, so a validity scan over a whole $MFT is \
                  safe.",
-                "Validate an $MFT record: `well_formed(blob, entry)` → STRUCT(ok, error, kind) with \
-                 kind ∈ {ok, baad, fixup-mismatch, bad-signature, attr-overrun, truncated, \
+                "Validate an $MFT record: `well_formed(blob, entry)` → `STRUCT(ok, error, kind)` \
+                 with kind ∈ {ok, baad, fixup-mismatch, bad-signature, attr-overrun, truncated, \
                  not-an-mft}.",
                 "well formed, validate, corrupt, baad, fixup, mismatch, bad signature, truncated, \
                  mft, ntfs, integrity",
-                "SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20);",
+                r#"[
+  {"description": "Validate one sample record (entry 20) — a clean record reports ok = true with kind 'ok'.",
+   "sql": "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20) AS w)"}
+]"#,
             ),
             ..Default::default()
         }

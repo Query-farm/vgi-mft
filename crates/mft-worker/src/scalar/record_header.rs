@@ -41,8 +41,8 @@ impl ScalarFunction for RecordHeaderFn {
             description: "Probe one $MFT record's FILE header without decoding attributes".into(),
             return_type: Some(DataType::Struct(fields())),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12);".into(),
-                description: "Probe the FILE header of MFT entry 12.".into(),
+                sql: "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12) AS h)".into(),
+                description: "Probe just the FILE-record header of one sample record (entry 12): signature, directory flag, and sequence number.".into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
@@ -56,7 +56,10 @@ impl ScalarFunction for RecordHeaderFn {
                  lsn, sizes) without decoding attributes: `record_header(blob, entry)`.",
                 "record header, FILE header, signature, sequence, in_use, is_dir, LSN, base \
                  reference, mft, ntfs, probe",
-                "SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12);",
+                r#"[
+  {"description": "Probe just the FILE-record header of one sample record (entry 12): signature, directory flag, and sequence number.",
+   "sql": "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12) AS h)"}
+]"#,
             ),
             ..Default::default()
         }

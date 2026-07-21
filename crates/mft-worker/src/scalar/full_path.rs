@@ -43,8 +43,8 @@ impl ScalarFunction for FullPath {
             description: "Reconstruct one $MFT entry's full path from parent references".into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20);".into(),
-                description: "Reconstruct the path of MFT entry 20.".into(),
+                sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20) AS full_path".into(),
+                description: "Reconstruct the full filesystem path of one record (entry 20) in the sample $MFT.".into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
@@ -59,7 +59,10 @@ impl ScalarFunction for FullPath {
                  `full_path(blob, entry)`; `\\$Orphan\\…` / `\\$Cycle\\…` when unresolved.",
                 "full path, path reconstruction, parent reference, directory, orphan, cycle, mft, \
                  ntfs, filesystem path",
-                "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20);",
+                r#"[
+  {"description": "Reconstruct the full filesystem path of one record (entry 20) in the sample $MFT.",
+   "sql": "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20) AS full_path"}
+]"#,
             ),
             ..Default::default()
         }

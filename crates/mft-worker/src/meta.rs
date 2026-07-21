@@ -75,8 +75,7 @@ pub const CATEGORIES_JSON: &str = r#"[
   {"name": "Timeline", "description": "The headline forensic timeline over a collected $MFT — one row per FILE record with reconstructed paths, both MACB timestamp quads, sizes, flags, and streams."},
   {"name": "Records", "description": "Per-record work over a single (blob, entry): full decode, header probe, path reconstruction, and never-panic validation."},
   {"name": "Anti-Forensics", "description": "Timestomp detection — the SI-vs-FN MACB heuristic that flags manipulated timestamps."},
-  {"name": "Attributes & Streams", "description": "Fan a record's NTFS attributes or $DATA streams (primary + alternate data streams) into rows."},
-  {"name": "Diagnostics", "description": "Worker provenance and build information."}
+  {"name": "Attributes & Streams", "description": "Fan a record's NTFS attributes or $DATA streams (primary + alternate data streams) into rows."}
 ]"#;
 
 /// Encode comma-separated keywords as the JSON array of strings that

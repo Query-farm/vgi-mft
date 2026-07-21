@@ -102,7 +102,7 @@ impl TableInOutFunction for Attributes {
              `$FILE_NAME`, `$DATA`), `resident`, `name` (an ADS name when present), `logical_size`, \
              `physical_size`, and `flags`. Pass a relation carrying a `blob` column of $MFT bytes \
              and an `entry` column of record numbers; the `ntfs_attribute_types` view maps each \
-             `type_id` to its meaning. See the example queries for ready-to-run SQL.",
+             `type_id` to its meaning.",
             "attributes, mft attributes, attribute list, type_id, resident, non-resident, deep \
              view, mft_dump, ntfs, lateral",
         );
@@ -112,9 +112,10 @@ impl TableInOutFunction for Attributes {
         ));
         tags.push((
             "vgi.example_queries".into(),
-            "SELECT entry, type_name, resident, name, logical_size\n\
-             FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry\n\
-             FROM read_blob('data/sample.mft'))));"
+            r#"[
+  {"description": "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
+   "sql": "SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"}
+]"#
                 .into(),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT

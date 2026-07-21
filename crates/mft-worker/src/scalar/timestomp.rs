@@ -69,31 +69,30 @@ impl ScalarFunction for Timestomp {
             description: "Score the SI-vs-FN timestomp heuristic over two MACB quads".into(),
             return_type: Some(DataType::Struct(result_fields())),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'});".into(),
-                description: "Flag a record whose SI predates its FN (timestomp).".into(),
+                sql: "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect".into(),
+                description: "Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad — the naturally-impossible ordering timestomping produces.".into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
                 "Anti-Forensics",
                 "Timestomp Heuristic",
                 "Score the anti-forensic SI-vs-FN timestamp heuristic over a $STANDARD_INFORMATION \
-                 MACB quad `si` and a $FILE_NAME MACB quad `fn` (each a STRUCT(created, modified, \
-                 accessed, mft_modified) of TIMESTAMP). Returns STRUCT(suspect BOOLEAN, reasons \
-                 LIST<VARCHAR>); reasons ⊆ {si-before-fn, si-creation-before-fn-creation, \
+                 MACB quad `si` and a $FILE_NAME MACB quad `fn` (each a `STRUCT(created, modified, \
+                 accessed, mft_modified)` of `TIMESTAMP`). Returns `STRUCT(suspect BOOLEAN, reasons \
+                 LIST<VARCHAR>)`; reasons ⊆ {si-before-fn, si-creation-before-fn-creation, \
                  zero-subsecond, fn-newer-than-si, all-four-equal}. SI is user-writable (tools like \
                  timestomp edit it) while FN is kernel-only, so SI earlier than FN — naturally \
                  impossible — and whole-second SI values are strong tells. Composable over the \
                  read_mft si_* / fn_* columns.",
-                "Score the SI-vs-FN timestomp heuristic: `timestomp(si, fn)` → STRUCT(suspect, \
-                 reasons). reasons ⊆ {si-before-fn, si-creation-before-fn-creation, zero-subsecond, \
+                "Score the SI-vs-FN timestomp heuristic: `timestomp(si, fn)` → `STRUCT(suspect, \
+                 reasons)`. reasons ⊆ {si-before-fn, si-creation-before-fn-creation, zero-subsecond, \
                  fn-newer-than-si, all-four-equal}.",
                 "timestomp, anti-forensic, timestamp manipulation, SI, FN, standard information, \
                  file name, MACB, divergence, zero subsecond, dfir",
-                "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': \
-                 TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': \
-                 TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP \
-                 '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP \
-                 '2020-01-01'}).suspect;",
+                r#"[
+  {"description": "Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad — the naturally-impossible ordering timestomping produces.",
+   "sql": "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect"}
+]"#,
             ),
             ..Default::default()
         }

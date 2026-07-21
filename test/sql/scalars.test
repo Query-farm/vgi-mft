@@ -2,8 +2,8 @@
 # group: [vgi_mft]
 #
 # The per-(blob, entry) scalars (mft_record, full_path, record_header,
-# well_formed, timestomp, mft_version) and the relation-in/out fan-outs
-# (attributes, streams), driven over the committed sample $MFT read as a BLOB.
+# well_formed, timestomp) and the relation-in/out fan-outs (attributes,
+# streams), driven over the committed sample $MFT read as a BLOB.
 
 require-env VGI_MFT_WORKER
 
@@ -17,12 +17,6 @@ ATTACH 'mft' AS mft (TYPE vgi, LOCATION '${VGI_MFT_WORKER}');
 
 statement ok
 SET search_path = 'mft.main';
-
-# A non-empty version string.
-query I
-SELECT length(mft_version()) > 0;
-----
-true
 
 # full_path(blob, entry): reconstruct a single entry's path.
 query T

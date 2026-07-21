@@ -39,8 +39,8 @@ impl TableFunction for ReadMft {
              references, both the $STANDARD_INFORMATION and $FILE_NAME MACB timestamp quads (so \
              the SI-vs-FN timestomp mismatch is a plain WHERE clause), logical/physical sizes, \
              allocated/deleted and file/dir flags, alternate data streams, and resident file \
-             content. The first argument is a VARCHAR path or glob ('/cases/*/$MFT', 's3://…') or \
-             a BLOB of $MFT bytes. `host :=` scopes a collection (defaults to the source \
+             content. The first argument is a `VARCHAR` path or glob ('/cases/*/$MFT', 's3://…') or \
+             a `BLOB` of $MFT bytes. `host :=` scopes a collection (defaults to the source \
              filename); `mode :=` is 'files' (one row per record, the default), 'streams' (one row \
              per $DATA stream — primary + each ADS), or 'allocated' (live files only). Deleted but \
              still-resident records are included by default — filter with WHERE is_allocated for \
@@ -59,10 +59,14 @@ impl TableFunction for ReadMft {
         ));
         tags.push((
             "vgi.example_queries".into(),
-            "SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft');\n\
-             SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect;\n\
-             SELECT ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE \
-             ads_name IS NOT NULL;"
+            r#"[
+  {"description": "The headline timeline: one row per FILE record with its reconstructed path and deleted flag.",
+   "sql": "SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft')"},
+  {"description": "Hunt for timestomped records — the SI-vs-FN mismatch is a plain WHERE clause.",
+   "sql": "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect"},
+  {"description": "Surface every alternate data stream by switching to streams mode.",
+   "sql": "SELECT full_path, ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE ads_name IS NOT NULL"}
+]"#
                 .into(),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT

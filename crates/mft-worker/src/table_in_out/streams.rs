@@ -80,8 +80,7 @@ impl TableInOutFunction for Streams {
              the primary stream, set for an ADS), `logical_size`, `physical_size`, `resident`, and \
              `data` (the resident bytes when the stream is resident, else NULL). Alternate data \
              streams are a classic malware hiding spot. Pass a relation carrying a `blob` column of \
-             $MFT bytes and an `entry` column of record numbers. See the example queries for \
-             ready-to-run SQL.",
+             $MFT bytes and an `entry` column of record numbers.",
             "streams, $DATA, alternate data stream, ADS, resident, malware hiding, mft, ntfs, \
              lateral",
         );
@@ -91,9 +90,10 @@ impl TableInOutFunction for Streams {
         ));
         tags.push((
             "vgi.example_queries".into(),
-            "SELECT entry, name, logical_size, resident\n\
-             FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry\n\
-             FROM read_blob('data/sample.mft'))));"
+            r#"[
+  {"description": "List the $DATA streams (primary + each ADS) of one sample $MFT record.",
+   "sql": "SELECT entry, name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"}
+]"#
                 .into(),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT

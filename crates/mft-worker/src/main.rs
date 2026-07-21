@@ -16,7 +16,6 @@
 //! -- Scalars over a (blob, entry) pair, plus the timestomp heuristic.
 //! SELECT mft.main.full_path(mftbytes, 5);
 //! SELECT mft.main.well_formed(mftbytes, 0).*;
-//! SELECT mft.main.mft_version();
 //! ```
 //!
 //! The pure NTFS engine (record decode, path reconstruction, the timestomp
@@ -34,7 +33,8 @@ mod table_in_out;
 use vgi::catalog::{CatSchema, CatView, CatalogModel};
 use vgi::Worker;
 
-/// Worker version string, surfaced by `mft_version()`.
+/// The worker's build version, published as the catalog's
+/// `implementation_version` (readable from `vgi_catalogs()` without a query).
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -75,8 +75,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  WHERE clause), recovers deleted-but-resident records, and surfaces alternate data \
                  streams and inline resident file content. Reach for it to timeline thousands of \
                  collected $MFTs for DFIR, incident response, and threat hunting, and to join the \
-                 result to known-bad paths, hashes, and detection rules. List the schema to \
-                 discover the available functions and their signatures."
+                 result to known-bad paths, hashes, and detection rules."
                     .to_string(),
             ),
             (
@@ -98,24 +97,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  counterpart — naturally impossible — and whole-second values are strong \
                  anti-forensic tells. Both MACB timestamp quads are first-class columns.\n\n\
                  Built on the permissively-licensed `mft` crate (omerbenamram); the NTFS on-disk \
-                 layout is documented openly by Microsoft and the forensics community. Part of the \
-                 [Query.Farm](https://query.farm) VGI ecosystem — the seed of a Windows-DFIR bundle \
-                 alongside `vgi-evtx` (event logs)."
+                 layout is documented openly by Microsoft and the forensics community."
                     .to_string(),
             ),
             (
                 "vgi.agent_test_tasks".to_string(),
                 crate::meta::agent_test_tasks_json(&[
-                    crate::meta::AgentTask {
-                        name: "worker_version",
-                        prompt: "Before relying on the mft worker in a pipeline, record which \
-                                 build is attached. Return the worker version string as a single \
-                                 row with one column named version.",
-                        reference_sql: "SELECT mft.main.mft_version() AS version",
-                        // Single scalar row; order is irrelevant, values must match.
-                        unordered: true,
-                        ignore_column_names: false,
-                    },
                     crate::meta::AgentTask {
                         name: "timeline_row_count",
                         prompt: "Parse the sample $MFT at data/sample.mft and tell me how many \
@@ -271,6 +258,9 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
         ],
         source_url: Some("https://github.com/Query-farm/vgi-mft".to_string()),
+        // The worker build version, readable from `vgi_catalogs()` without
+        // spending a query — replaces the retired `mft_version()` scalar (VGI328).
+        implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
@@ -300,8 +290,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      `mft.main.<fn>(...)`). It turns a collected NTFS $MFT into a forensic \
                      filesystem timeline: full-path reconstruction from parent references, the \
                      SI-vs-FN MACB timestomp heuristic, deleted-record recovery, per-record decode \
-                     and never-panic validation, and attribute / $DATA-stream fan-out. List the \
-                     schema to discover the available functions and their signatures."
+                     and never-panic validation, and attribute / $DATA-stream fan-out."
                         .to_string(),
                 ),
                 (
@@ -323,18 +312,19 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      over hostile or truncated input, plus attribute and `$DATA` / alternate-data-\
                      stream fan-out.\n\n\
                      **When to use it** — DFIR triage, threat hunting, and incident response over \
-                     Windows hosts. List the schema to discover the available functions and their \
-                     signatures."
+                     Windows hosts."
                         .to_string(),
                 ),
                 (
                     "vgi.example_queries".to_string(),
-                    "SELECT mft.main.mft_version();\n\
-                     SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft');\n\
-                     SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE \
-                     is_timestomp_suspect;\n\
-                     SELECT ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') \
-                     WHERE ads_name IS NOT NULL;"
+                    r#"[
+  {"description": "The headline forensic timeline: one row per FILE record with its reconstructed path and deleted flag.",
+   "sql": "SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft')"},
+  {"description": "Hunt for timestomped records — the SI-vs-FN heuristic exposed as a plain WHERE clause.",
+   "sql": "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect"},
+  {"description": "Surface every alternate data stream (a classic malware hiding spot) via streams mode.",
+   "sql": "SELECT full_path, ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE ads_name IS NOT NULL"}
+]"#
                         .to_string(),
                 ),
             ],
@@ -404,8 +394,9 @@ fn attribute_types_view() -> CatView {
                 "vgi.doc_llm".to_string(),
                 "A browsable reference table (no arguments, no $MFT needed) listing the fifteen \
                  standard NTFS attribute type codes with their canonical `$`-prefixed name and a \
-                 one-line purpose. Columns: `type_id` (UINTEGER, e.g. 128), `type_name` (VARCHAR, \
-                 e.g. `$DATA`), `purpose` (VARCHAR). It is the vocabulary behind the `type_id` and \
+                 one-line purpose. Columns: `type_id` (`UINTEGER`, e.g. 128), `type_name` \
+                 (`VARCHAR`, e.g. `$DATA`), `purpose` (`VARCHAR`). It is the vocabulary behind the \
+                 `type_id` and \
                  `type_name` columns of the attributes() function — join or filter it to explain a \
                  record's attributes without parsing bytes. Type codes are the on-disk NTFS values \
                  (16 = 0x10 = $STANDARD_INFORMATION, 48 = 0x30 = $FILE_NAME, 128 = 0x80 = $DATA)."
@@ -418,12 +409,12 @@ fn attribute_types_view() -> CatView {
                  the vocabulary behind the `type_id` / `type_name` columns of the `attributes()` \
                  function. No arguments, no `$MFT`, no network.\n\n\
                  ## Columns\n\n\
-                 - `type_id` (UINTEGER) -- the on-disk NTFS attribute type code, e.g. `128` \
+                 - `type_id` (`UINTEGER`) -- the on-disk NTFS attribute type code, e.g. `128` \
                  (`0x80`).\n\
-                 - `type_name` (VARCHAR) -- the canonical `$`-prefixed name, e.g. `$DATA`.\n\
-                 - `purpose` (VARCHAR) -- a one-line description of what the attribute stores.\n\n\
+                 - `type_name` (`VARCHAR`) -- the canonical `$`-prefixed name, e.g. `$DATA`.\n\
+                 - `purpose` (`VARCHAR`) -- a one-line description of what the attribute stores.\n\n\
                  Join it to the `attributes()` output on `type_id` to label each attribute, or \
-                 browse it on its own. See the example queries for ready-to-run SQL."
+                 browse it on its own."
                     .to_string(),
             ),
             (

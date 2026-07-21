@@ -25,26 +25,29 @@ impl ScalarFunction for MftRecord {
             description: "Fully decode one $MFT record into a lossless STRUCT view".into(),
             return_type: Some(mft_record_type()),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22);".into(),
-                description: "Fully decode MFT entry 22 into a STRUCT.".into(),
+                sql: "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22) AS r)".into(),
+                description: "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.".into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags_with_example(
                 "Records",
                 "Decode MFT Record",
-                "Fully decode MFT entry `entry` in a $MFT `blob` into a STRUCT carrying the header \
+                "Fully decode MFT entry `entry` in a $MFT `blob` into a `STRUCT` carrying the header \
                  (entry, sequence, in_use, is_dir, base_ref, lsn, hard_links), the \
-                 $STANDARD_INFORMATION MACB + DOS attrs + USN (`si`), the full LIST of every \
+                 $STANDARD_INFORMATION MACB + DOS attrs + USN (`si`), the full `LIST` of every \
                  $FILE_NAME (`fn` — including the 8.3 DOS short name, with namespace and parent \
                  reference), the primary $DATA (`data` — resident bytes when small), the alternate \
                  data streams (`ads`), and every attribute (`attributes`). The raw, lossless \
                  per-record view, NULL for an empty slot.",
-                "Fully decode one $MFT record: `mft_record(blob, entry)` → STRUCT(entry, sequence, \
+                "Fully decode one $MFT record: `mft_record(blob, entry)` → `STRUCT(entry, sequence, \
                  in_use, is_dir, base_ref, lsn, hard_links, si, fn LIST, data, ads LIST, \
-                 attributes LIST).",
+                 attributes LIST)`.",
                 "mft record, decode, struct, standard information, file name, MACB, data, ADS, \
                  attributes, namespace, DOS short name, ntfs",
-                "SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22);",
+                r#"[
+  {"description": "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.",
+   "sql": "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22) AS r)"}
+]"#,
             ),
             ..Default::default()
         }

@@ -95,8 +95,6 @@ SELECT
   record_header((SELECT b FROM m), 0).*,   -- cheap FILE-header probe (LSN, flags, sizes)
   well_formed((SELECT b FROM m), 0).*;     -- validate; never panics on corrupt input
 
-SELECT mft_version();                       -- the running worker version
-
 -- The timestomp heuristic as a pure scalar, scoring multiple reasons:
 SELECT timestomp(
   {'created': si_created, 'modified': si_modified,
