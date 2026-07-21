@@ -1550,7 +1550,7 @@ dependencies = [
 
 [[package]]
 name = "mft-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jiff",
  "log",
@@ -1564,7 +1564,7 @@ dependencies = [
 
 [[package]]
 name = "mft-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
