@@ -4,3 +4,6 @@
 .DS_Store
 # vgi-lint-check LLM caches (doc-review / agent-sim)
 .vgi-*-cache.json
+
+# Browser build output (wasm/build.sh)
+/wasm/dist
