@@ -24,4 +24,3 @@ mode = "run"
 [tool.vgi-lint-check.options]
 # Most output columns (read_mft's 25-column timeline, attributes, streams) carry
 # a comment; struct-returning scalars expose their shape via doc tags instead.
-column_comment_min_ratio = 0.8
