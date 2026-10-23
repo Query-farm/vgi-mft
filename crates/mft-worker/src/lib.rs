@@ -113,32 +113,18 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         prompt: "Parse the sample $MFT at data/sample.mft and tell me how many \
                                  FILE records it contains. Return one row with a single column \
                                  named records.",
-                        reference_sql:
-                            "SELECT count(*) AS records FROM mft.main.read_mft('data/sample.mft')",
-                        // A single count value; tolerate a differently-named column.
-                        unordered: true,
-                        ignore_column_names: true,
                     },
                     crate::meta::AgentTask {
                         name: "list_deleted_files",
                         prompt: "From the sample $MFT at data/sample.mft, list the names of the \
                                  deleted (not-allocated) non-directory files. Return a column \
                                  named file_name, ordered alphabetically.",
-                        reference_sql: "SELECT file_name FROM mft.main.read_mft('data/sample.mft') \
-                                        WHERE is_deleted AND NOT is_dir ORDER BY file_name",
-                        // Reference pins the order with ORDER BY.
-                        unordered: false,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "timestomp_hunt",
                         prompt: "Hunt the sample $MFT at data/sample.mft for timestomping: return \
                                  the full_path of every record flagged is_timestomp_suspect. \
                                  Return a single column named full_path ordered alphabetically.",
-                        reference_sql: "SELECT full_path FROM mft.main.read_mft('data/sample.mft') \
-                                        WHERE is_timestomp_suspect ORDER BY full_path",
-                        unordered: false,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "alternate_data_streams",
@@ -146,53 +132,30 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                                  data/sample.mft using streams mode. Return the ads name in a \
                                  column named ads_name for rows where ads_name is not null, \
                                  ordered alphabetically.",
-                        reference_sql: "SELECT ads_name FROM mft.main.read_mft('data/sample.mft', \
-                                        mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY \
-                                        ads_name",
-                        unordered: false,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "reconstruct_path",
                         prompt: "In the sample $MFT at data/sample.mft, reconstruct the full \
                                  filesystem path of MFT record 20. Return one row with a single \
                                  column named path.",
-                        reference_sql: "SELECT mft.main.full_path((SELECT content FROM \
-                                        read_blob('data/sample.mft')), 20) AS path",
-                        // A single deterministic path string.
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "decode_record_ads",
                         prompt: "Fully decode MFT record 22 in the sample $MFT at data/sample.mft \
                                  and tell me how many alternate data streams (ADS) it carries. \
                                  Return one row with a single column named ads_count.",
-                        reference_sql: "SELECT len(mft.main.mft_record((SELECT content FROM \
-                                        read_blob('data/sample.mft')), 22).ads) AS ads_count",
-                        // A single count; tolerate a differently-named column.
-                        unordered: true,
-                        ignore_column_names: true,
                     },
                     crate::meta::AgentTask {
                         name: "probe_header_is_dir",
                         prompt: "Probe just the FILE-record header of MFT record 12 in the sample \
                                  $MFT at data/sample.mft. Is it a directory? Return one row with a \
                                  single boolean column named is_dir.",
-                        reference_sql: "SELECT mft.main.record_header((SELECT content FROM \
-                                        read_blob('data/sample.mft')), 12).is_dir AS is_dir",
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "validate_record",
                         prompt: "Validate MFT record 20 in the sample $MFT at data/sample.mft. Is \
                                  the record well-formed? Return one row with a single boolean \
                                  column named ok.",
-                        reference_sql: "SELECT mft.main.well_formed((SELECT content FROM \
-                                        read_blob('data/sample.mft')), 20).ok AS ok",
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "timestomp_heuristic",
@@ -201,27 +164,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                                  $FILE_NAME timestamps are all 2020-01-01 is a timestomp suspect \
                                  (its SI predates its FN). Return one row with a single boolean \
                                  column named suspect.",
-                        reference_sql: "SELECT mft.main.timestomp({'created': TIMESTAMP \
-                                        '2009-01-01', 'modified': TIMESTAMP '2009-01-01', \
-                                        'accessed': TIMESTAMP '2009-01-01', 'mft_modified': \
-                                        TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', \
-                                        'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP \
-                                        '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect \
-                                        AS suspect",
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "count_record_attributes",
                         prompt: "In the sample $MFT at data/sample.mft, count how many NTFS \
                                  attributes MFT record 22 has. Return one row with a single column \
                                  named attribute_count.",
-                        reference_sql: "SELECT count(*) AS attribute_count FROM \
-                                        mft.main.attributes((FROM (SELECT content AS blob, \
-                                        22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))",
-                        // A single count; tolerate a differently-named column.
-                        unordered: true,
-                        ignore_column_names: true,
                     },
                     crate::meta::AgentTask {
                         name: "detect_alternate_data_stream",
@@ -229,21 +177,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                                  record 22 has an alternate data stream — a $DATA stream whose name \
                                  is not null. Return one row with a single boolean column named \
                                  has_ads.",
-                        reference_sql: "SELECT count(*) FILTER (WHERE name IS NOT NULL) > 0 AS \
-                                        has_ads FROM mft.main.streams((FROM (SELECT content AS blob, \
-                                        22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))",
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                     crate::meta::AgentTask {
                         name: "attribute_type_lookup",
                         prompt: "Using the NTFS attribute-type reference table, look up the \
                                  canonical attribute name for attribute type id 128. Return one row \
                                  with a single column named type_name.",
-                        reference_sql: "SELECT type_name FROM mft.main.ntfs_attribute_types WHERE \
-                                        type_id = 128",
-                        unordered: true,
-                        ignore_column_names: false,
                     },
                 ]),
             ),
@@ -268,6 +207,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
+            path: Vec::new(),
             comment: Some(
                 "NTFS $MFT forensics: a filesystem timeline, per-record decode and validation, \
                  the timestomp heuristic, and attribute / $DATA-stream fan-out."
