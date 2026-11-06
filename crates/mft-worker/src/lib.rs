@@ -390,6 +390,7 @@ fn attribute_types_view() -> CatView {
                 "What the attribute stores and what it is used for in NTFS.".to_string(),
             ),
         ],
+        ..Default::default()
     }
 }
 
