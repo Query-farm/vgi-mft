@@ -30,8 +30,12 @@ LOAD vgi;
 ATTACH 'mft' AS mft (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mft@v0.2.0');
 
 -- The headline forensic timeline: one row per FILE record with its reconstructed path
--- and deleted flag.
-SELECT entry, full_path, is_deleted FROM mft.main.read_mft('sample.mft');
+-- and deleted flag. read_mft takes a path/glob or the $MFT bytes as a BLOB; here the
+-- committed sample $MFT is fetched over HTTPS (DuckDB forbids a subquery argument to a
+-- table function, so the bytes go through a variable).
+SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));
+SELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample'));
+-- Or point it at a collected $MFT on disk: read_mft('/cases/host01/$MFT').
 
 -- Browse the whole NTFS attribute-type registry, lowest code first.
 SELECT type_id, type_name, purpose FROM mft.main.ntfs_attribute_types ORDER BY type_id;

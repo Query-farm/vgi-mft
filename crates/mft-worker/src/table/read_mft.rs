@@ -57,27 +57,21 @@ impl TableFunction for ReadMft {
             "vgi.result_columns_schema".into(),
             crate::meta::result_columns_schema_json(crate::arrow_map::timeline_schema().as_ref()),
         ));
-        tags.push((
-            "vgi.example_queries".into(),
-            r#"[
-  {"description": "The headline timeline: one row per FILE record with its reconstructed path and deleted flag.",
-   "sql": "SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft')"},
-  {"description": "Hunt for timestomped records — the SI-vs-FN mismatch is a plain WHERE clause.",
-   "sql": "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect"},
-  {"description": "Surface every alternate data stream by switching to streams mode.",
-   "sql": "SELECT full_path, ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE ads_name IS NOT NULL"}
-]"#
-                .into(),
-        ));
-        // A guaranteed-runnable, verified example over the committed sample $MFT
-        // (run from the repo root, where data/ lives).
+        // Guaranteed-runnable, verified examples over the committed sample $MFT,
+        // fetched over HTTPS from a pinned tag so they run without a checkout.
+        // DuckDB forbids a subquery argument to a table function, so the bytes are
+        // held in a session VARIABLE and passed to read_mft as a BLOB: each example
+        // is a two-statement list run in order on one connection. (They live here
+        // rather than in `vgi.example_queries`, whose `sql` is a single statement.)
         tags.push((
             "vgi.executable_examples".into(),
             r#"[
-  {"description": "Count the FILE records in the sample $MFT timeline.",
-   "sql": "SELECT count(*) AS records FROM mft.main.read_mft('data/sample.mft')"},
-  {"description": "Hunt the sample $MFT for timestomped records.",
-   "sql": "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect ORDER BY full_path"}
+  {"description": "The headline timeline: one row per FILE record with its reconstructed path and deleted flag.",
+   "sql": ["SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))", "SELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample')) ORDER BY entry"]},
+  {"description": "Hunt the sample $MFT for timestomped records — the SI-vs-FN mismatch is a plain WHERE clause.",
+   "sql": ["SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))", "SELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect ORDER BY full_path"]},
+  {"description": "Surface every alternate data stream by switching to streams mode.",
+   "sql": ["SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))", "SELECT full_path, ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY full_path"]}
 ]"#
             .into(),
         ));

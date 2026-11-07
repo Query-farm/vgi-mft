@@ -89,5 +89,7 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
 ```
 
 The `http` E2E exercises the cursor/resolver resume round-trip; run the linter
-and the E2E from the **repo root** (the `data/sample.mft` fixture is referenced
-repo-relative).
+and the E2E from the **repo root** (the `.test` files reference the `data/sample.mft`
+fixture repo-relative). The catalog examples instead fetch it over HTTPS from a
+pinned tag (`raw.githubusercontent.com/.../v0.2.0/data/sample.mft`) so they run for
+an installed worker with no checkout; keep that URL pinned to a tag, never `main`.

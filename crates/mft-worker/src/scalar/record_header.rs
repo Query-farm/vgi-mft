@@ -41,7 +41,7 @@ impl ScalarFunction for RecordHeaderFn {
             description: "Probe one $MFT record's FILE header without decoding attributes".into(),
             return_type: Some(DataType::Struct(fields())),
             examples: vec![FunctionExample {
-                sql: "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12) AS h)".into(),
+                sql: "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 12) AS h)".into(),
                 description: "Probe just the FILE-record header of one sample record (entry 12): signature, directory flag, and sequence number.".into(),
                 expected_output: None,
             }],
@@ -58,7 +58,7 @@ impl ScalarFunction for RecordHeaderFn {
                  reference, mft, ntfs, probe",
                 r#"[
   {"description": "Probe just the FILE-record header of one sample record (entry 12): signature, directory flag, and sequence number.",
-   "sql": "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12) AS h)"}
+   "sql": "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 12) AS h)"}
 ]"#,
             ),
             ..Default::default()

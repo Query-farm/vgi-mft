@@ -25,7 +25,7 @@ impl ScalarFunction for MftRecord {
             description: "Fully decode one $MFT record into a lossless STRUCT view".into(),
             return_type: Some(mft_record_type()),
             examples: vec![FunctionExample {
-                sql: "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22) AS r)".into(),
+                sql: "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)".into(),
                 description: "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.".into(),
                 expected_output: None,
             }],
@@ -46,7 +46,7 @@ impl ScalarFunction for MftRecord {
                  attributes, namespace, DOS short name, ntfs",
                 r#"[
   {"description": "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.",
-   "sql": "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22) AS r)"}
+   "sql": "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)"}
 ]"#,
             ),
             ..Default::default()

@@ -43,7 +43,7 @@ impl ScalarFunction for FullPath {
             description: "Reconstruct one $MFT entry's full path from parent references".into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20) AS full_path".into(),
+                sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS full_path".into(),
                 description: "Reconstruct the full filesystem path of one record (entry 20) in the sample $MFT.".into(),
                 expected_output: None,
             }],
@@ -61,7 +61,7 @@ impl ScalarFunction for FullPath {
                  ntfs, filesystem path",
                 r#"[
   {"description": "Reconstruct the full filesystem path of one record (entry 20) in the sample $MFT.",
-   "sql": "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20) AS full_path"}
+   "sql": "SELECT mft.main.full_path((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS full_path"}
 ]"#,
             ),
             ..Default::default()

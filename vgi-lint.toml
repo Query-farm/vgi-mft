@@ -5,8 +5,9 @@
 # per-argument docs on every function.
 #
 # Execution (VGI9xx) runs the example queries against the attached worker. The
-# read_mft / attributes / streams examples read the committed synthetic $MFT at
-# `data/sample.mft`, so run the linter from the REPO ROOT (where `data/` lives):
+# examples read the committed synthetic $MFT `data/sample.mft` over HTTPS from a
+# pinned tag (read_blob('https://raw.githubusercontent.com/...')), so they run from
+# any directory, with or without a checkout:
 #   cargo build --release
 #   vgi-lint-check --location target/release/mft-worker --fail-on info
 [tool.vgi-lint-check]
@@ -16,8 +17,7 @@ fail_on = "info"
 
 [tool.vgi-lint-check.execution]
 # Run mode: every example (read_mft / attributes / streams / scalars) is RUN
-# against the attached worker, reading the committed data/sample.mft. Run the
-# linter from the repo root so the read_blob('data/sample.mft') paths resolve.
+# against the attached worker, reading the committed data/sample.mft over HTTPS.
 enabled = true
 mode = "run"
 

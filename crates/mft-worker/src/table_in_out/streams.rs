@@ -92,18 +92,18 @@ impl TableInOutFunction for Streams {
             "vgi.example_queries".into(),
             r#"[
   {"description": "List the $DATA streams (primary + each ADS) of one sample $MFT record.",
-   "sql": "SELECT entry, name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"}
+   "sql": "SELECT entry, name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"}
 ]"#
                 .into(),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT
-        // (run from the repo root, where data/ lives). Entry 22 has a primary
+        // (fetched over HTTPS at a pinned tag, so it runs without a checkout). Entry 22 has a primary
         // $DATA stream plus one alternate data stream named 'hidden'.
         tags.push((
             "vgi.executable_examples".into(),
             r#"[
   {"description": "List the $DATA streams of one sample $MFT record, surfacing the hidden ADS by name.",
-   "sql": "SELECT name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft')))) ORDER BY name NULLS FIRST"}
+   "sql": "SELECT name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')))) ORDER BY name NULLS FIRST"}
 ]"#
             .into(),
         ));

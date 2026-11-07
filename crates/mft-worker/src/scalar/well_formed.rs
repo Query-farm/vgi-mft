@@ -35,7 +35,7 @@ impl ScalarFunction for WellFormedFn {
             description: "Validate one $MFT record; never panics on corrupt input".into(),
             return_type: Some(DataType::Struct(fields())),
             examples: vec![FunctionExample {
-                sql: "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20) AS w)".into(),
+                sql: "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS w)".into(),
                 description: "Validate one sample record (entry 20) — a clean record reports ok = true with kind 'ok'.".into(),
                 expected_output: None,
             }],
@@ -54,7 +54,7 @@ impl ScalarFunction for WellFormedFn {
                  mft, ntfs, integrity",
                 r#"[
   {"description": "Validate one sample record (entry 20) — a clean record reports ok = true with kind 'ok'.",
-   "sql": "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20) AS w)"}
+   "sql": "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS w)"}
 ]"#,
             ),
             ..Default::default()

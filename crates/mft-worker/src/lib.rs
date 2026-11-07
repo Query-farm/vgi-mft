@@ -110,50 +110,50 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 crate::meta::agent_test_tasks_json(&[
                     crate::meta::AgentTask {
                         name: "timeline_row_count",
-                        prompt: "Parse the sample $MFT at data/sample.mft and tell me how many \
+                        prompt: "Parse the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft and tell me how many \
                                  FILE records it contains. Return one row with a single column \
                                  named records.",
                     },
                     crate::meta::AgentTask {
                         name: "list_deleted_files",
-                        prompt: "From the sample $MFT at data/sample.mft, list the names of the \
+                        prompt: "From the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft, list the names of the \
                                  deleted (not-allocated) non-directory files. Return a column \
                                  named file_name, ordered alphabetically.",
                     },
                     crate::meta::AgentTask {
                         name: "timestomp_hunt",
-                        prompt: "Hunt the sample $MFT at data/sample.mft for timestomping: return \
+                        prompt: "Hunt the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft for timestomping: return \
                                  the full_path of every record flagged is_timestomp_suspect. \
                                  Return a single column named full_path ordered alphabetically.",
                     },
                     crate::meta::AgentTask {
                         name: "alternate_data_streams",
                         prompt: "Surface every alternate data stream in the sample $MFT at \
-                                 data/sample.mft using streams mode. Return the ads name in a \
+                                 https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft using streams mode. Return the ads name in a \
                                  column named ads_name for rows where ads_name is not null, \
                                  ordered alphabetically.",
                     },
                     crate::meta::AgentTask {
                         name: "reconstruct_path",
-                        prompt: "In the sample $MFT at data/sample.mft, reconstruct the full \
+                        prompt: "In the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft, reconstruct the full \
                                  filesystem path of MFT record 20. Return one row with a single \
                                  column named path.",
                     },
                     crate::meta::AgentTask {
                         name: "decode_record_ads",
-                        prompt: "Fully decode MFT record 22 in the sample $MFT at data/sample.mft \
+                        prompt: "Fully decode MFT record 22 in the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft \
                                  and tell me how many alternate data streams (ADS) it carries. \
                                  Return one row with a single column named ads_count.",
                     },
                     crate::meta::AgentTask {
                         name: "probe_header_is_dir",
                         prompt: "Probe just the FILE-record header of MFT record 12 in the sample \
-                                 $MFT at data/sample.mft. Is it a directory? Return one row with a \
+                                 $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft. Is it a directory? Return one row with a \
                                  single boolean column named is_dir.",
                     },
                     crate::meta::AgentTask {
                         name: "validate_record",
-                        prompt: "Validate MFT record 20 in the sample $MFT at data/sample.mft. Is \
+                        prompt: "Validate MFT record 20 in the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft. Is \
                                  the record well-formed? Return one row with a single boolean \
                                  column named ok.",
                     },
@@ -167,13 +167,13 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     },
                     crate::meta::AgentTask {
                         name: "count_record_attributes",
-                        prompt: "In the sample $MFT at data/sample.mft, count how many NTFS \
+                        prompt: "In the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft, count how many NTFS \
                                  attributes MFT record 22 has. Return one row with a single column \
                                  named attribute_count.",
                     },
                     crate::meta::AgentTask {
                         name: "detect_alternate_data_stream",
-                        prompt: "In the sample $MFT at data/sample.mft, determine whether MFT \
+                        prompt: "In the sample $MFT at https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft, determine whether MFT \
                                  record 22 has an alternate data stream — a $DATA stream whose name \
                                  is not null. Return one row with a single boolean column named \
                                  has_ads.",
@@ -264,11 +264,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     "vgi.example_queries".to_string(),
                     r#"[
   {"description": "The headline forensic timeline: one row per FILE record with its reconstructed path and deleted flag.",
-   "sql": "SELECT entry, full_path, is_deleted FROM mft.main.read_mft('data/sample.mft')"},
+   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample'))"},
   {"description": "Hunt for timestomped records — the SI-vs-FN heuristic exposed as a plain WHERE clause.",
-   "sql": "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect"},
+   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect"},
   {"description": "Surface every alternate data stream (a classic malware hiding spot) via streams mode.",
-   "sql": "SELECT full_path, ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE ads_name IS NOT NULL"}
+   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path, ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL"}
 ]"#
                         .to_string(),
                 ),

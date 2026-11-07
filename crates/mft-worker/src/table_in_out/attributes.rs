@@ -114,18 +114,18 @@ impl TableInOutFunction for Attributes {
             "vgi.example_queries".into(),
             r#"[
   {"description": "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
-   "sql": "SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"}
+   "sql": "SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"}
 ]"#
                 .into(),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT
-        // (run from the repo root, where data/ lives). Entry 22 carries
+        // (fetched over HTTPS at a pinned tag, so it runs without a checkout). Entry 22 carries
         // $STANDARD_INFORMATION + two $FILE_NAME + a primary $DATA + an ADS $DATA.
         tags.push((
             "vgi.executable_examples".into(),
             r#"[
   {"description": "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
-   "sql": "SELECT type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft')))) ORDER BY attribute_id"}
+   "sql": "SELECT type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')))) ORDER BY attribute_id"}
 ]"#
             .into(),
         ));

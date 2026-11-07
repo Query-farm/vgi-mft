@@ -4,40 +4,48 @@
 # (catalog_metadata() in crates/mft-worker/src/lib.rs); the answers live here,
 # keyed by task name, so the agent being graded never sees them (VGI416).
 # vgi-lint discovers this file in the repo root. References read the committed
-# data/sample.mft fixture (paths relative to the repo root) or the built-in
-# ntfs_attribute_types view, so the suite needs no network access.
+# data/sample.mft fixture over HTTPS (pinned to the v0.2.0 tag, so they run from
+# any directory) or the built-in ntfs_attribute_types view.
 
 tasks:
   - name: "timeline_row_count"
-    reference_sql: "SELECT count(*) AS records FROM mft.main.read_mft('data/sample.mft')"
+    reference_sql:
+      - "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))"
+      - "SELECT count(*) AS records FROM mft.main.read_mft(getvariable('mft_sample'))"
     unordered: true
     ignore_column_names: true
   - name: "list_deleted_files"
-    reference_sql: "SELECT file_name FROM mft.main.read_mft('data/sample.mft') WHERE is_deleted AND NOT is_dir ORDER BY file_name"
+    reference_sql:
+      - "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))"
+      - "SELECT file_name FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_deleted AND NOT is_dir ORDER BY file_name"
     unordered: false
     ignore_column_names: false
   - name: "timestomp_hunt"
-    reference_sql: "SELECT full_path FROM mft.main.read_mft('data/sample.mft') WHERE is_timestomp_suspect ORDER BY full_path"
+    reference_sql:
+      - "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))"
+      - "SELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect ORDER BY full_path"
     unordered: false
     ignore_column_names: false
   - name: "alternate_data_streams"
-    reference_sql: "SELECT ads_name FROM mft.main.read_mft('data/sample.mft', mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY ads_name"
+    reference_sql:
+      - "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))"
+      - "SELECT ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY ads_name"
     unordered: false
     ignore_column_names: false
   - name: "reconstruct_path"
-    reference_sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('data/sample.mft')), 20) AS path"
+    reference_sql: "SELECT mft.main.full_path((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS path"
     unordered: true
     ignore_column_names: false
   - name: "decode_record_ads"
-    reference_sql: "SELECT len(mft.main.mft_record((SELECT content FROM read_blob('data/sample.mft')), 22).ads) AS ads_count"
+    reference_sql: "SELECT len(mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22).ads) AS ads_count"
     unordered: true
     ignore_column_names: true
   - name: "probe_header_is_dir"
-    reference_sql: "SELECT mft.main.record_header((SELECT content FROM read_blob('data/sample.mft')), 12).is_dir AS is_dir"
+    reference_sql: "SELECT mft.main.record_header((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 12).is_dir AS is_dir"
     unordered: true
     ignore_column_names: false
   - name: "validate_record"
-    reference_sql: "SELECT mft.main.well_formed((SELECT content FROM read_blob('data/sample.mft')), 20).ok AS ok"
+    reference_sql: "SELECT mft.main.well_formed((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20).ok AS ok"
     unordered: true
     ignore_column_names: false
   - name: "timestomp_heuristic"
@@ -45,11 +53,11 @@ tasks:
     unordered: true
     ignore_column_names: false
   - name: "count_record_attributes"
-    reference_sql: "SELECT count(*) AS attribute_count FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"
+    reference_sql: "SELECT count(*) AS attribute_count FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"
     unordered: true
     ignore_column_names: true
   - name: "detect_alternate_data_stream"
-    reference_sql: "SELECT count(*) FILTER (WHERE name IS NOT NULL) > 0 AS has_ads FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('data/sample.mft'))))"
+    reference_sql: "SELECT count(*) FILTER (WHERE name IS NOT NULL) > 0 AS has_ads FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"
     unordered: true
     ignore_column_names: false
   - name: "attribute_type_lookup"
