@@ -61,6 +61,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 "NTFS $MFT Forensic Timeline".to_string(),
             ),
             (
+                "vgi.subtitle".to_string(),
+                "Turn a collected NTFS $MFT into a SQL forensic timeline with full paths, \
+                 timestomp flags, deleted records, and data streams."
+                    .to_string(),
+            ),
+            (
                 "vgi.keywords".to_string(),
                 crate::meta::keywords_json(
                     "mft, $MFT, ntfs, master file table, dfir, forensics, incident response, \
@@ -214,7 +220,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
-                ("vgi.title".to_string(), "MFT — main".to_string()),
+                ("vgi.title".to_string(), "MFT Forensics".to_string()),
                 (
                     "vgi.keywords".to_string(),
                     crate::meta::keywords_json(
