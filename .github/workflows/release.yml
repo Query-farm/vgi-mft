@@ -26,6 +26,8 @@ permissions:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    with:
+      linux_only: true
 
   release:
     needs: [ci]
