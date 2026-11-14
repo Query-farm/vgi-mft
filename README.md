@@ -205,3 +205,7 @@ for the architecture.
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright 2026 Query Farm LLC — https://query.farm
+
+## Executed notebooks
+
+See [notebooks/](notebooks/) for a portable walkthrough of MFT review scope, timestamp clues and resident-stream coverage.

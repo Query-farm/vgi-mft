@@ -1,0 +1,10 @@
+{
+  "source_repository": "Query-farm/vgi-mft",
+  "revision": "577c3df0d916bc442cc22dfa50bc4394cf69c0e1",
+  "source_path": "data/sample.mft",
+  "generator_path": "crates/mft-worker/examples/gen_fixture.rs",
+  "file": "sample.mft",
+  "bytes": 26624,
+  "sha256": "6f9485acb24435636ad8207552b56f24bd9a9ca2f3dcfe34f1e1e590dc0df4f1",
+  "provenance": "Unchanged synthetic NTFS MFT fixture, generated from invented records and timestamps. Not collected from a real filesystem or incident."
+}
