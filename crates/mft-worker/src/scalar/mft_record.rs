@@ -4,14 +4,17 @@
 
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::DataType;
-use vgi::{
-    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
-    ScalarFunction,
-};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::{blob_val, u64_val};
 use crate::arrow_map::{build_mft_record_array, mft_record_type};
+
+/// The single-call demo; the composed example over the read_mft timeline follows it.
+const BASIC_EXAMPLE: crate::examples::Example = crate::examples::Example {
+    description: "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.",
+    sql: "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)",
+};
 
 pub struct MftRecord;
 
@@ -24,11 +27,7 @@ impl ScalarFunction for MftRecord {
         FunctionMetadata {
             description: "Fully decode one $MFT record into a lossless STRUCT view".into(),
             return_type: Some(mft_record_type()),
-            examples: vec![FunctionExample {
-                sql: "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)".into(),
-                description: "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.".into(),
-                expected_output: None,
-            }],
+            examples: crate::examples::function_examples(&[&BASIC_EXAMPLE, &crate::examples::DOS_SHORT_NAMES]),
             tags: crate::meta::object_tags_with_example(
                 "Records",
                 "Decode MFT Record",
@@ -44,10 +43,10 @@ impl ScalarFunction for MftRecord {
                  attributes LIST)`.",
                 "mft record, decode, struct, standard information, file name, MACB, data, ADS, \
                  attributes, namespace, DOS short name, ntfs",
-                r#"[
-  {"description": "Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.",
-   "sql": "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)"}
-]"#,
+                &crate::examples::example_queries_json(&[
+                    &BASIC_EXAMPLE,
+                    &crate::examples::DOS_SHORT_NAMES,
+                ]),
             ),
             ..Default::default()
         }

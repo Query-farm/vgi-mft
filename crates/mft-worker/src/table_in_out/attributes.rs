@@ -110,13 +110,18 @@ impl TableInOutFunction for Attributes {
             "vgi.result_columns_schema".into(),
             crate::meta::result_columns_schema_json(&output_schema()),
         ));
+        // The single-record demo, then the composed volume profile (read_mft feeds
+        // this function; ntfs_attribute_types labels its output).
+        const ONE_RECORD: crate::examples::Example = crate::examples::Example {
+            description: "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
+            sql: "SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))",
+        };
         tags.push((
             "vgi.example_queries".into(),
-            r#"[
-  {"description": "List every attribute (type, residency, ADS name, size) of one sample $MFT record.",
-   "sql": "SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"}
-]"#
-                .into(),
+            crate::examples::example_queries_json(&[
+                &ONE_RECORD,
+                &crate::examples::ATTRIBUTE_PROFILE,
+            ]),
         ));
         // A guaranteed-runnable, verified example over the committed sample $MFT
         // (fetched over HTTPS at a pinned tag, so it runs without a checkout). Entry 22 carries

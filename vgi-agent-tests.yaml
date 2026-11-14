@@ -60,6 +60,12 @@ tasks:
     reference_sql: "SELECT count(*) FILTER (WHERE name IS NOT NULL) > 0 AS has_ads FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))"
     unordered: true
     ignore_column_names: false
+  - name: "file_attribute_counts"
+    reference_sql:
+      - "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))"
+      - "SELECT t.full_path, count(*) AS attribute_count FROM mft.main.attributes((FROM (SELECT getvariable('mft_sample') AS blob, entry FROM mft.main.read_mft(getvariable('mft_sample')) WHERE NOT is_dir))) AS a JOIN mft.main.read_mft(getvariable('mft_sample')) AS t ON t.entry = a.entry GROUP BY t.full_path ORDER BY attribute_count DESC, t.full_path"
+    unordered: false
+    ignore_column_names: false
   - name: "attribute_type_lookup"
     reference_sql: "SELECT type_name FROM mft.main.ntfs_attribute_types WHERE type_id = 128"
     unordered: true

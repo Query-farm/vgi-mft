@@ -1,0 +1,55 @@
+# name: test/sql/composed.test
+# group: [vgi_mft]
+#
+# Composed queries: the read_mft timeline feeding attributes(), mft_record() and
+# timestomp(), labelled by the ntfs_attribute_types view — the catalog's composed
+# examples (crates/mft-worker/src/examples.rs) and the README fan-out example,
+# over the committed synthetic $MFT (data/sample.mft).
+
+require-env VGI_MFT_WORKER
+
+require-env VGI_MFT_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mft' AS mft (TYPE vgi, LOCATION '${VGI_MFT_WORKER}');
+
+statement ok
+SET VARIABLE mft_sample = (SELECT content FROM read_blob('${VGI_MFT_DATA}/sample.mft'));
+
+# read_mft -> attributes -> ntfs_attribute_types: the volume's attribute makeup.
+query ITII
+SELECT a.type_id, t.type_name, count(DISTINCT a.entry) AS records, count(*) AS instances FROM mft.main.attributes((FROM (SELECT getvariable('mft_sample') AS blob, entry FROM mft.main.read_mft(getvariable('mft_sample'))))) AS a JOIN mft.main.ntfs_attribute_types AS t ON t.type_id = a.type_id GROUP BY ALL ORDER BY a.type_id;
+----
+16	$STANDARD_INFORMATION	10	10
+48	$FILE_NAME	10	11
+128	$DATA	5	6
+
+# The README form: read_blob + read_mft over a path in the relation argument.
+query II
+SELECT a.type_id, count(*) AS instances FROM mft.main.attributes((FROM (SELECT b.content AS blob, r.entry FROM read_blob('${VGI_MFT_DATA}/sample.mft') AS b, mft.main.read_mft('${VGI_MFT_DATA}/sample.mft') AS r))) AS a GROUP BY ALL ORDER BY a.type_id;
+----
+16	10
+48	11
+128	6
+
+# read_mft -> timestomp: why the suspect is flagged.
+query TT
+SELECT full_path, mft.main.timestomp({'created': si_created, 'modified': si_modified, 'accessed': si_accessed, 'mft_modified': si_mft_modified}, {'created': fn_created, 'modified': fn_modified, 'accessed': fn_accessed, 'mft_modified': fn_mft_modified}).reasons AS reasons FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect ORDER BY full_path;
+----
+Windows\System32\timestomped.exe	[si-creation-before-fn-creation, si-before-fn, zero-subsecond, fn-newer-than-si, all-four-equal]
+
+# read_mft -> mft_record: DOS 8.3 short names the timeline does not carry.
+query TT
+SELECT t.full_path, f.name AS short_name FROM mft.main.read_mft(getvariable('mft_sample')) AS t, unnest(mft.main.mft_record(getvariable('mft_sample'), t.entry).fn) AS u(f) WHERE f.namespace = 'DOS' ORDER BY t.full_path;
+----
+Windows\System32\notes.txt	NOTES~1.TXT
+
+# The README scalar block: struct results expand with unnest() (DuckDB has no
+# `fn(...).*` syntax on a function call).
+query TTITTIIIITTT
+WITH m AS (SELECT content AS b FROM read_blob('${VGI_MFT_DATA}/sample.mft')) SELECT mft.main.full_path(b, 5), unnest(mft.main.record_header(b, 0)), unnest(mft.main.well_formed(b, 0)) FROM m;
+----
+.	FILE	1	true	false	0	0	260	1024	true	NULL	ok

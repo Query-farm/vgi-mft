@@ -88,8 +88,8 @@ SELECT entry, sequence, full_path, logical_size, fn_modified
 FROM read_mft('/cases/host01/$MFT')
 WHERE is_deleted AND NOT is_dir;
 
--- 4. Surface every alternate data stream (a classic malware hiding spot),
---    then join hidden paths to a known-bad IOC table — fleet-wide, one query.
+-- 4. Surface every alternate data stream (a classic malware hiding spot);
+--    join the result to your known-bad IOC table to triage it.
 SELECT t.host, t.full_path, t.ads_name, t.logical_size
 FROM read_mft('/cases/host01/$MFT', mode := 'streams') AS t
 WHERE t.ads_name IS NOT NULL;            -- non-default $DATA streams only
@@ -121,17 +121,18 @@ Returns one wide row per FILE record: `entry`, `sequence`, `parent_entry`,
 -- Pass the $MFT bytes as a BLOB (e.g. from DuckDB's read_blob table function).
 WITH m AS (SELECT content AS b FROM read_blob('/cases/host01/$MFT'))
 SELECT
-  mft_record((SELECT b FROM m), 5),        -- full lossless STRUCT decode of a record
-  full_path((SELECT b FROM m), 5),         -- path reconstruction for one entry
-  record_header((SELECT b FROM m), 0).*,   -- cheap FILE-header probe (LSN, flags, sizes)
-  well_formed((SELECT b FROM m), 0).*;     -- validate; never panics on corrupt input
+  mft_record(b, 5),             -- full lossless STRUCT decode of a record
+  full_path(b, 5),              -- path reconstruction for one entry
+  unnest(record_header(b, 0)),  -- cheap FILE-header probe (LSN, flags, sizes)
+  unnest(well_formed(b, 0))     -- validate; never panics on corrupt input
+FROM m;
 
 -- The timestomp heuristic as a pure scalar, scoring multiple reasons:
-SELECT timestomp(
+SELECT full_path, unnest(timestomp(
   {'created': si_created, 'modified': si_modified,
    'accessed': si_accessed, 'mft_modified': si_mft_modified},
   {'created': fn_created, 'modified': fn_modified,
-   'accessed': fn_accessed, 'mft_modified': fn_mft_modified}).*
+   'accessed': fn_accessed, 'mft_modified': fn_mft_modified}))
 FROM read_mft('/cases/host01/$MFT');
 ```
 
@@ -149,6 +150,16 @@ SELECT * FROM attributes((FROM (
 -- Every $DATA stream (primary + each ADS) of one record:
 SELECT * FROM streams((FROM (
   SELECT content AS blob, 5::UBIGINT AS entry FROM read_blob('/cases/host01/$MFT'))));
+-- Compose them: read_mft supplies every entry, attributes() fans each record out,
+-- and the ntfs_attribute_types view labels each type with its purpose.
+SELECT a.type_id, t.type_name, t.purpose,
+       count(DISTINCT a.entry) AS records, count(*) AS instances
+FROM attributes((FROM (
+  SELECT b.content AS blob, r.entry
+  FROM read_blob('/cases/host01/$MFT') AS b, read_mft('/cases/host01/$MFT') AS r))) AS a
+JOIN ntfs_attribute_types AS t ON t.type_id = a.type_id
+GROUP BY ALL
+ORDER BY a.type_id;
 ```
 
 ## How it works

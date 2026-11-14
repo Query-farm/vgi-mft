@@ -10,10 +10,7 @@ use arrow_array::{ArrayRef, ListArray, RecordBatch, StructArray};
 use arrow_buffer::OffsetBuffer;
 use arrow_schema::{DataType, Field, Fields, TimeUnit};
 use mft_core::{timestomp, Macb};
-use vgi::{
-    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
-    ScalarFunction,
-};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::ts_micros;
@@ -57,6 +54,12 @@ fn read_quad(col: &ArrayRef, row: usize) -> Macb {
     }
 }
 
+/// The single-call demo; the composed example over the read_mft timeline follows it.
+const BASIC_EXAMPLE: crate::examples::Example = crate::examples::Example {
+    description: "Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad — the naturally-impossible ordering timestomping produces.",
+    sql: "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect",
+};
+
 pub struct Timestomp;
 
 impl ScalarFunction for Timestomp {
@@ -68,11 +71,7 @@ impl ScalarFunction for Timestomp {
         FunctionMetadata {
             description: "Score the SI-vs-FN timestomp heuristic over two MACB quads".into(),
             return_type: Some(DataType::Struct(result_fields())),
-            examples: vec![FunctionExample {
-                sql: "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect".into(),
-                description: "Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad — the naturally-impossible ordering timestomping produces.".into(),
-                expected_output: None,
-            }],
+            examples: crate::examples::function_examples(&[&BASIC_EXAMPLE, &crate::examples::TIMESTOMP_REASONS]),
             tags: crate::meta::object_tags_with_example(
                 "Anti-Forensics",
                 "Timestomp Heuristic",
@@ -89,10 +88,10 @@ impl ScalarFunction for Timestomp {
                  fn-newer-than-si, all-four-equal}.",
                 "timestomp, anti-forensic, timestamp manipulation, SI, FN, standard information, \
                  file name, MACB, divergence, zero subsecond, dfir",
-                r#"[
-  {"description": "Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad — the naturally-impossible ordering timestomping produces.",
-   "sql": "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect"}
-]"#,
+                &crate::examples::example_queries_json(&[
+                    &BASIC_EXAMPLE,
+                    &crate::examples::TIMESTOMP_REASONS,
+                ]),
             ),
             ..Default::default()
         }

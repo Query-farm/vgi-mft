@@ -20,7 +20,7 @@
 //!
 //! -- Scalars over a (blob, entry) pair, plus the timestomp heuristic.
 //! SELECT mft.main.full_path(mftbytes, 5);
-//! SELECT mft.main.well_formed(mftbytes, 0).*;
+//! SELECT unnest(mft.main.well_formed(mftbytes, 0));
 //! ```
 //!
 //! The pure NTFS engine (record decode, path reconstruction, the timestomp
@@ -29,6 +29,7 @@
 
 mod arrow_io;
 mod arrow_map;
+mod examples;
 mod meta;
 mod options;
 mod scalar;
@@ -185,6 +186,15 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                                  has_ads.",
                     },
                     crate::meta::AgentTask {
+                        name: "file_attribute_counts",
+                        prompt: "For every non-directory record in the sample $MFT at \
+                                 https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft, \
+                                 count how many NTFS attributes that record carries. Return two \
+                                 columns: full_path (VARCHAR, the reconstructed path) and \
+                                 attribute_count (BIGINT), ordered by attribute_count descending, \
+                                 then full_path ascending.",
+                    },
+                    crate::meta::AgentTask {
                         name: "attribute_type_lookup",
                         prompt: "Using the NTFS attribute-type reference table, look up the \
                                  canonical attribute name for attribute type id 128. Return one row \
@@ -268,15 +278,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ),
                 (
                     "vgi.example_queries".to_string(),
-                    r#"[
-  {"description": "The headline forensic timeline: one row per FILE record with its reconstructed path and deleted flag.",
-   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample'))"},
-  {"description": "Hunt for timestomped records — the SI-vs-FN heuristic exposed as a plain WHERE clause.",
-   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect"},
-  {"description": "Surface every alternate data stream (a classic malware hiding spot) via streams mode.",
-   "sql": "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path, ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL"}
-]"#
-                        .to_string(),
+                    schema_example_queries(),
                 ),
             ],
             views: vec![attribute_types_view()],
@@ -285,6 +287,27 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         }],
         ..Default::default()
     }
+}
+
+/// The schema-level `vgi.example_queries`: the single-object tour first, then
+/// the composed examples (also listed on the object each one drives).
+fn schema_example_queries() -> String {
+    use crate::examples::{example_queries_json, Example, COMPOSED};
+    const TIMELINE: Example = Example {
+        description: "The headline forensic timeline: one row per FILE record with its reconstructed path and deleted flag.",
+        sql: "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample'))",
+    };
+    const TIMESTOMP_HUNT: Example = Example {
+        description: "Hunt for timestomped records — the SI-vs-FN heuristic exposed as a plain WHERE clause.",
+        sql: "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect",
+    };
+    const ADS: Example = Example {
+        description: "Surface every alternate data stream (a classic malware hiding spot) via streams mode.",
+        sql: "SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'));\nSELECT full_path, ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL",
+    };
+    let mut all: Vec<&Example> = vec![&TIMELINE, &TIMESTOMP_HUNT, &ADS];
+    all.extend(COMPOSED);
+    example_queries_json(&all)
 }
 
 /// A curated, browsable reference view (VGI146): the NTFS attribute-type registry.
