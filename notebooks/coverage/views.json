@@ -1,0 +1,44 @@
+{
+  "query": "SELECT * FROM duckdb_views() WHERE database_name='mft' ORDER BY schema_name,view_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "schema_oid",
+    "view_name",
+    "view_oid",
+    "comment",
+    "tags",
+    "internal",
+    "temporary",
+    "column_count",
+    "sql",
+    "is_bound"
+  ],
+  "rows": [
+    [
+      "mft",
+      22592,
+      "main",
+      22795,
+      "ntfs_attribute_types",
+      22796,
+      "Reference registry mapping each NTFS attribute type code to its canonical name and purpose \u2014 the vocabulary behind the `type_id` / `type_name` columns of the attributes() function. A static, credential-free lookup you can browse or join.",
+      {
+        "domain": "security-and-forensics",
+        "topic": "ntfs-attribute-types",
+        "vgi.category": "Attributes & Streams",
+        "vgi.doc_llm": "A browsable reference table (no arguments, no $MFT needed) listing the fifteen standard NTFS attribute type codes with their canonical `$`-prefixed name and a one-line purpose. Columns: `type_id` (`UINTEGER`, e.g. 128), `type_name` (`VARCHAR`, e.g. `$DATA`), `purpose` (`VARCHAR`). It is the vocabulary behind the `type_id` and `type_name` columns of the attributes() function \u2014 join or filter it to explain a record's attributes without parsing bytes. Type codes are the on-disk NTFS values (16 = 0x10 = $STANDARD_INFORMATION, 48 = 0x30 = $FILE_NAME, 128 = 0x80 = $DATA).",
+        "vgi.doc_md": "# `ntfs_attribute_types`\n\nA static, browsable reference of the fifteen standard NTFS attribute type codes \u2014 the vocabulary behind the `type_id` / `type_name` columns of the `attributes()` function. No arguments, no `$MFT`, no network.\n\n## Columns\n\n- `type_id` (`UINTEGER`) -- the on-disk NTFS attribute type code, e.g. `128` (`0x80`).\n- `type_name` (`VARCHAR`) -- the canonical `$`-prefixed name, e.g. `$DATA`.\n- `purpose` (`VARCHAR`) -- a one-line description of what the attribute stores.\n\nJoin it to the `attributes()` output on `type_id` to label each attribute, or browse it on its own.",
+        "vgi.example_queries": "[\n  {\"description\": \"Browse the whole NTFS attribute-type registry, lowest code first.\",\n   \"sql\": \"SELECT type_id, type_name, purpose FROM mft.main.ntfs_attribute_types ORDER BY type_id\"},\n  {\"description\": \"Look up the name and purpose of attribute type 128 (the $DATA attribute).\",\n   \"sql\": \"SELECT type_name, purpose FROM mft.main.ntfs_attribute_types WHERE type_id = 128\"}\n]",
+        "vgi.keywords": "[\"ntfs attribute types\",\"attribute type code\",\"type_id\",\"type_name\",\"$STANDARD_INFORMATION\",\"$FILE_NAME\",\"$DATA\",\"$INDEX_ROOT\",\"$REPARSE_POINT\",\"reference\",\"registry\",\"lookup\",\"mft\"]",
+        "vgi.title": "NTFS Attribute Type Reference"
+      },
+      false,
+      false,
+      null,
+      "CREATE VIEW ntfs_attribute_types AS SELECT * FROM (SELECT * FROM (VALUES (CAST(16 AS UINTEGER), '$STANDARD_INFORMATION', 'Standard information: the SI MACB timestamp quad, DOS file attributes, USN, and quota/security ids. User-writable, so it is what the timestomp heuristic watches.'), (32, '$ATTRIBUTE_LIST', 'A pointer list to attributes held in other FILE records, used when a single record overflows.'), (48, '$FILE_NAME', 'A name (Win32, DOS 8.3, or POSIX namespace), the parent-directory reference used to reconstruct paths, and the kernel-only FN MACB quad.'), (64, '$OBJECT_ID', 'The 64-bit object id / distributed-link-tracking GUID.'), (80, '$SECURITY_DESCRIPTOR', 'A per-file security descriptor (modern volumes centralize these in the $Secure metafile).'), (96, '$VOLUME_NAME', 'The volume label (carried by the $Volume metadata file).'), (112, '$VOLUME_INFORMATION', 'The NTFS version and the volume dirty/state flags (carried by $Volume).'), (128, '$DATA', 'File content: the unnamed primary stream plus any named alternate data streams (ADS).'), (144, '$INDEX_ROOT', 'The resident root of a B-tree index \u2014 directory entries and other indexes.'), (160, '$INDEX_ALLOCATION', 'The non-resident B-tree blocks of a large index, such as a big directory.'), (176, '$BITMAP', 'An allocation bitmap for the $MFT itself or for an index allocation.'), (192, '$REPARSE_POINT', 'Reparse data: symbolic links, junctions, mount points, and filter-driver tags.'), (208, '$EA_INFORMATION', 'Size and packing metadata for extended attributes.'), (224, '$EA', 'Extended-attribute name/value pairs (OS/2 and application metadata).'), (256, '$LOGGED_UTILITY_STREAM', 'A logged stream used by EFS ($EFS encryption metadata) and other utilities.')) AS valueslist) AS t(type_id, type_name, purpose);",
+      false
+    ]
+  ]
+}

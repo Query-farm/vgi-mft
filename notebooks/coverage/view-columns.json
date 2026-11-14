@@ -1,0 +1,37 @@
+{
+  "query": "DESCRIBE SELECT * FROM mft.main.ntfs_attribute_types",
+  "columns": [
+    "column_name",
+    "column_type",
+    "null",
+    "key",
+    "default",
+    "extra"
+  ],
+  "rows": [
+    [
+      "type_id",
+      "UINTEGER",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "type_name",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "purpose",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ]
+  ]
+}

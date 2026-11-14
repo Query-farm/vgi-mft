@@ -1,0 +1,657 @@
+{
+  "schema_version": 1,
+  "status": "met",
+  "meets_target": true,
+  "catalogs": {
+    "released": {
+      "catalog_status": "verified",
+      "revision": "v0.4.0",
+      "catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+      "collection_reconciled": true,
+      "denominator": 9,
+      "observed_objects": 9,
+      "required": 9,
+      "verified_count": 9,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 9,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "attributes"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "full_path"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mft_record"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ntfs_attribute_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "read_mft"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "record_header"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "streams"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "timestomp"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "attributes",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "attributes(relation TABLE) -> TABLE(entry UBIGINT, attribute_id USMALLINT, type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, flags UINTEGER)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "full_path",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "full_path(blob BLOB, entry UBIGINT) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mft_record",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "mft_record(blob BLOB, entry UBIGINT) -> STRUCT(entry UBIGINT, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, hard_links USMALLINT, si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, dos_attr UINTEGER, usn UBIGINT), fn STRUCT(\"name\" VARCHAR, namespace VARCHAR, parent_entry UBIGINT, parent_seq USMALLINT, created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT)[], \"data\" STRUCT(resident BOOLEAN, logical_size UBIGINT, physical_size UBIGINT, resident_bytes BLOB), ads STRUCT(\"name\" VARCHAR, logical_size UBIGINT, resident BOOLEAN)[], attributes STRUCT(type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, \"name\" VARCHAR)[])"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ntfs_attribute_types",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "VIEW(type_id UINTEGER, type_name VARCHAR, purpose VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "read_mft",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "read_mft(glob_or_blob ANY, mode VARCHAR, host VARCHAR) -> TABLE(host VARCHAR, entry UBIGINT, sequence USMALLINT, parent_entry UBIGINT, full_path VARCHAR, file_name VARCHAR, is_dir BOOLEAN, is_allocated BOOLEAN, is_deleted BOOLEAN, si_created TIMESTAMP, si_modified TIMESTAMP, si_accessed TIMESTAMP, si_mft_modified TIMESTAMP, fn_created TIMESTAMP, fn_modified TIMESTAMP, fn_accessed TIMESTAMP, fn_mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT, hard_link_count USMALLINT, dos_attributes UINTEGER, ads_name VARCHAR, resident_data BLOB, is_timestomp_suspect BOOLEAN, diagnostics VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "record_header",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "record_header(blob BLOB, entry UBIGINT) -> STRUCT(signature VARCHAR, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, used_size UINTEGER, allocated_size UINTEGER)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "streams",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "streams(relation TABLE) -> TABLE(entry UBIGINT, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, resident BOOLEAN, data BLOB)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "timestomp",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "timestomp(si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP), fn STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP)) -> STRUCT(suspect BOOLEAN, reasons VARCHAR[])"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "well_formed(blob BLOB, entry UBIGINT) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    "current": {
+      "catalog_status": "verified",
+      "revision": "3f1b0098d05b433e419e4e3aba4edb686efceab0",
+      "catalog_sha256": "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245",
+      "collection_reconciled": true,
+      "denominator": 9,
+      "observed_objects": 9,
+      "required": 9,
+      "verified_count": 9,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 0,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "attributes"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "full_path"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mft_record"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ntfs_attribute_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "read_mft"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "record_header"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "streams"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "timestomp"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "attributes",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "attributes(relation TABLE) -> TABLE(entry UBIGINT, attribute_id USMALLINT, type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, flags UINTEGER)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "full_path",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "full_path(blob BLOB, entry UBIGINT) -> VARCHAR"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mft_record",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "mft_record(blob BLOB, entry UBIGINT) -> STRUCT(entry UBIGINT, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, hard_links USMALLINT, si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, dos_attr UINTEGER, usn UBIGINT), fn STRUCT(\"name\" VARCHAR, namespace VARCHAR, parent_entry UBIGINT, parent_seq USMALLINT, created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT)[], \"data\" STRUCT(resident BOOLEAN, logical_size UBIGINT, physical_size UBIGINT, resident_bytes BLOB), ads STRUCT(\"name\" VARCHAR, logical_size UBIGINT, resident BOOLEAN)[], attributes STRUCT(type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, \"name\" VARCHAR)[])"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "ntfs_attribute_types",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "VIEW(type_id UINTEGER, type_name VARCHAR, purpose VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "read_mft",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "read_mft(glob_or_blob ANY, mode VARCHAR, host VARCHAR) -> TABLE(host VARCHAR, entry UBIGINT, sequence USMALLINT, parent_entry UBIGINT, full_path VARCHAR, file_name VARCHAR, is_dir BOOLEAN, is_allocated BOOLEAN, is_deleted BOOLEAN, si_created TIMESTAMP, si_modified TIMESTAMP, si_accessed TIMESTAMP, si_mft_modified TIMESTAMP, fn_created TIMESTAMP, fn_modified TIMESTAMP, fn_accessed TIMESTAMP, fn_mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT, hard_link_count USMALLINT, dos_attributes UINTEGER, ads_name VARCHAR, resident_data BLOB, is_timestomp_suspect BOOLEAN, diagnostics VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "record_header",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "record_header(blob BLOB, entry UBIGINT) -> STRUCT(signature VARCHAR, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, used_size UINTEGER, allocated_size UINTEGER)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "streams",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "streams(relation TABLE) -> TABLE(entry UBIGINT, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, resident BOOLEAN, data BLOB)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "timestomp",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "timestomp(si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP), fn STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP)) -> STRUCT(suspect BOOLEAN, reasons VARCHAR[])"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "well_formed",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "well_formed(blob BLOB, entry UBIGINT) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    }
+  },
+  "interface_drift": {
+    "known": true,
+    "current_only": [],
+    "released_only": [],
+    "changed": []
+  },
+  "notebooks": {
+    "01_scope_and_timestamp_review.ipynb": {
+      "verified": true,
+      "issues": []
+    },
+    "02_trace_one_entry_from_header_to_attributes.ipynb": {
+      "verified": true,
+      "issues": []
+    }
+  },
+  "examples": [
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "read_mft"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "timestomp"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "streams"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "record_header"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "well_formed"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "mft_record"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "full_path"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "attributes"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "ntfs_attribute_types"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701"
+    }
+  ],
+  "issues": []
+}

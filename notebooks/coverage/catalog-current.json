@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-mft",
+  "revision": "3f1b0098d05b433e419e4e3aba4edb686efceab0",
+  "captured_at": "2026-11-14T20:36:34.339322+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/functions-current.json",
+      "sha256": "952b73dee6483da13551671b4a99836c49eaf2157b0af7001f4d5ea72ab71a1a",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/tables-current.json",
+      "sha256": "df2447532fe60b5d343340eb98ae63568553e016b580b06b2b95f47a022a0f36",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/views-current.json",
+      "sha256": "39a4e0b5e3afc0e20737e6a8a59e215ec9471368b7cc50ecef3da8ea5eba4c59",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/arguments-current.json",
+      "sha256": "55882fe2a19b9320f6cec13d8e8fb21efb46210ef097661a8ed083fda45bd1cb",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/catalog-metadata-current.json",
+      "sha256": "8b97ff3d5bfd93d8b6f5465253b88c6ded9a0589837dd00711f96a31ebb9b362",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/view-columns-current.json",
+      "sha256": "c6f5fc908bbe6aec290911b6ffe24eb259b9a91d4a9953dc76b322396a7e59a4",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/read_mft-columns-current.json",
+      "sha256": "8a9c49ecdabdb2bb1f0b9c723cbbdff62e887cd90007f937ff5d0685172e0653",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/attributes-columns-current.json",
+      "sha256": "e9e5a73d75c2b4ad77315d66109cd927bfd41f47abdce2438569321034bf70ef",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/streams-columns-current.json",
+      "sha256": "b2a41e44ffa34f5f3ce4807c7e400bcca3fedf483c75fc4be1014c080b9e1ad1",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/source-compatibility.json",
+      "sha256": "d2ed1bcc22326b2eb34d2bbb60a998514d61da0c163b895971484ddd300c4983",
+      "description": "Reviewed metadata-only main diff and existing green source CI"
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "attributes",
+      "kind": "function",
+      "signatures": [
+        "attributes(relation TABLE) -> TABLE(entry UBIGINT, attribute_id USMALLINT, type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, flags UINTEGER)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "full_path",
+      "kind": "function",
+      "signatures": [
+        "full_path(blob BLOB, entry UBIGINT) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mft_record",
+      "kind": "function",
+      "signatures": [
+        "mft_record(blob BLOB, entry UBIGINT) -> STRUCT(entry UBIGINT, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, hard_links USMALLINT, si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, dos_attr UINTEGER, usn UBIGINT), fn STRUCT(\"name\" VARCHAR, namespace VARCHAR, parent_entry UBIGINT, parent_seq USMALLINT, created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT)[], \"data\" STRUCT(resident BOOLEAN, logical_size UBIGINT, physical_size UBIGINT, resident_bytes BLOB), ads STRUCT(\"name\" VARCHAR, logical_size UBIGINT, resident BOOLEAN)[], attributes STRUCT(type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, \"name\" VARCHAR)[])"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "read_mft",
+      "kind": "function",
+      "signatures": [
+        "read_mft(glob_or_blob ANY, mode VARCHAR, host VARCHAR) -> TABLE(host VARCHAR, entry UBIGINT, sequence USMALLINT, parent_entry UBIGINT, full_path VARCHAR, file_name VARCHAR, is_dir BOOLEAN, is_allocated BOOLEAN, is_deleted BOOLEAN, si_created TIMESTAMP, si_modified TIMESTAMP, si_accessed TIMESTAMP, si_mft_modified TIMESTAMP, fn_created TIMESTAMP, fn_modified TIMESTAMP, fn_accessed TIMESTAMP, fn_mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT, hard_link_count USMALLINT, dos_attributes UINTEGER, ads_name VARCHAR, resident_data BLOB, is_timestomp_suspect BOOLEAN, diagnostics VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "record_header",
+      "kind": "function",
+      "signatures": [
+        "record_header(blob BLOB, entry UBIGINT) -> STRUCT(signature VARCHAR, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, used_size UINTEGER, allocated_size UINTEGER)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "streams",
+      "kind": "function",
+      "signatures": [
+        "streams(relation TABLE) -> TABLE(entry UBIGINT, name VARCHAR, logical_size UBIGINT, physical_size UBIGINT, resident BOOLEAN, data BLOB)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "timestomp",
+      "kind": "function",
+      "signatures": [
+        "timestomp(si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP), fn STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP)) -> STRUCT(suspect BOOLEAN, reasons VARCHAR[])"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "well_formed",
+      "kind": "function",
+      "signatures": [
+        "well_formed(blob BLOB, entry UBIGINT) -> STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "ntfs_attribute_types",
+      "kind": "table",
+      "signatures": [
+        "VIEW(type_id UINTEGER, type_name VARCHAR, purpose VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ],
+  "runtime": "Haybarn2.0.0rc11",
+  "launch": "Existing source-built native binary; artifact SHA256 in source-compatibility.json",
+  "review_notes": "Five scalars,one table function,two relation-input functions and one view give nine logical surfaces. Alternate input forms count as one named surface each. All read supplied capture bytes or fixed vocabulary; no external writes/authentication/exclusions. Complete registrations and output columns reviewed."
+}

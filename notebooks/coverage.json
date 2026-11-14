@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "catalog_sha256": "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+        "notes": "Actual complete 8 function rows/names,0physical tables,1 ntfs_attribute_types view=9 logical surfaces. Five scalars,one table function,two relation-input functions and one view; overload/input forms count once. Full function/view output columns match release and current; reviewed source diff changes metadata/composed examples only. No writes/authentication/exclusions. Notebook runtime is release,not current-main."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "catalog_sha256": "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245",
+        "notes": "Actual complete 8 function rows/names,0physical tables,1 ntfs_attribute_types view=9 logical surfaces. Five scalars,one table function,two relation-input functions and one view; overload/input forms count once. Full function/view output columns match release and current; reviewed source diff changes metadata/composed examples only. No writes/authentication/exclusions. Notebook runtime is release,not current-main."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_scope_and_timestamp_review.ipynb",
+      "sha256": "14582c975be103b87015e59adad9fb4b7bcb903534e05e1faa62b89016fa86c6",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "1c4dd7da11acbb892267d238832e2660d6f3362a1eb8e2f59f74599924bd4274"
+      }
+    },
+    {
+      "path": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+      "execution": {
+        "path": "coverage/run-02.json",
+        "sha256": "b6d45012652be166783313e78867a32e184eaf0aff6cf3d0c694c6149b650e1d"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "read_mft"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "sql": [
+        {
+          "cell": "connection",
+          "reference": "mft.main.read_mft"
+        }
+      ],
+      "narrative_cells": [
+        "attach-story",
+        "timeline-story"
+      ],
+      "result_cells": [
+        "coverage-finding",
+        "timeline-chart"
+      ],
+      "interpretation_cells": [
+        "coverage-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "14582c975be103b87015e59adad9fb4b7bcb903534e05e1faa62b89016fa86c6",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Materialize the complete authored fixture before selecting a review population.",
+        "finding": "Ten decoded records include 3 directories; default selects 7 non-directories with 1 deleted entry and 1 path diagnostic. Allocation-only selection retains 6; raw fixture remains unchanged."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "timestomp"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "sql": [
+        {
+          "cell": "connection",
+          "reference": "mft.main.timestomp"
+        }
+      ],
+      "narrative_cells": [
+        "timeline-story",
+        "streams-story"
+      ],
+      "result_cells": [
+        "timeline-chart",
+        "signals-chart"
+      ],
+      "interpretation_cells": [
+        "signals-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "14582c975be103b87015e59adad9fb4b7bcb903534e05e1faa62b89016fa86c6",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Explain the table flag through independent scalar reason columns without treating them as a summed score.",
+        "finding": "One selected record triggers the worker flag. Six default records have all SI fields equal without the flag; experiment retains five such records. Flags/reasons are clues,not evidence of actual tampering."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "streams"
+      },
+      "notebook": "01_scope_and_timestamp_review.ipynb",
+      "sql": [
+        {
+          "cell": "stream-query",
+          "reference": "mft.main.streams"
+        }
+      ],
+      "narrative_cells": [
+        "streams-story"
+      ],
+      "result_cells": [
+        "stream-display",
+        "signals-chart"
+      ],
+      "interpretation_cells": [
+        "signals-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "14582c975be103b87015e59adad9fb4b7bcb903534e05e1faa62b89016fa86c6",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Keep stream fan-out and resident content separate from record counts and non-resident logical size.",
+        "finding": "Default 6 streams include 5 resident streams/44 available bytes; excluding the deleted record leaves 5 streams/4 resident/35 bytes. Named stream and unknown non-resident content remain visible."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "record_header"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "probe-query",
+          "reference": "mft.main.record_header"
+        }
+      ],
+      "narrative_cells": [
+        "probe-story",
+        "names-story"
+      ],
+      "result_cells": [
+        "probe-finding",
+        "names-finding"
+      ],
+      "interpretation_cells": [
+        "probe-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Compare header projection with full validation and record decoding for a valid subject and two fixed invalid controls.",
+        "finding": "Selected entry22 hasFILEsignature/sequence1/used468/allocated1024bytes; experiment entry25 hasused300. Both invalid controls retainNULLheaders and distinct reasons. Header sizes do not describe file content."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "well_formed"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "probe-query",
+          "reference": "mft.main.well_formed"
+        }
+      ],
+      "narrative_cells": [
+        "probe-story"
+      ],
+      "result_cells": [
+        "probe-finding"
+      ],
+      "interpretation_cells": [
+        "probe-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Preserve explicit validation kinds rather than interpreting unavailable record data as empty attributes.",
+        "finding": "One of three probes is valid; zero-filled slot1 givesnot-an-mft/empty-slot,while past-end index26 givestruncated/out-of-range. Both controls retainNULLrecords; these are two specific invalid cases."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "mft_record"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "probe-query",
+          "reference": "mft.main.mft_record"
+        }
+      ],
+      "narrative_cells": [
+        "probe-story",
+        "names-story"
+      ],
+      "result_cells": [
+        "probe-finding",
+        "names-finding",
+        "attributes-finding"
+      ],
+      "interpretation_cells": [
+        "names-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Expand the nested names and reconcile attribute/alternate-stream counts for the selected record.",
+        "finding": "Entry22 hasWin32+DOSnames forone declared hard link,5attributes and1ADS. Entry25 has1name,3attributes,noADS. Invalid controls remainNULLrather than zero-length lists."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "full_path"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "identity-query",
+          "reference": "mft.main.full_path"
+        }
+      ],
+      "narrative_cells": [
+        "names-story"
+      ],
+      "result_cells": [
+        "names-finding"
+      ],
+      "interpretation_cells": [
+        "names-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Compare independent scalar path reconstruction with the timeline while retaining unresolved parent diagnostics.",
+        "finding": "Default pathWindows\\System32\\notes.txt agrees across projections; orphan experiment returns\\$Orphan\\999\\orphan.dat plusorphan-parent. Agreement is not independent verification of a live path."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "attributes"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "attributes-query",
+          "reference": "mft.main.attributes"
+        }
+      ],
+      "narrative_cells": [
+        "attributes-story"
+      ],
+      "result_cells": [
+        "attributes-finding"
+      ],
+      "interpretation_cells": [
+        "attributes-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Account for repeated attribute types before comparing metadata attributes with data streams.",
+        "finding": "Default1SI+2FN+2DATA gives5instances; orphan has1each,giving3. Resident content is18\u21924bytes across2\u21921streams; logical attribute-value byte sums also contain metadata."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "ntfs_attribute_types"
+      },
+      "notebook": "02_trace_one_entry_from_header_to_attributes.ipynb",
+      "sql": [
+        {
+          "cell": "attribute-summary-query",
+          "reference": "mft.main.ntfs_attribute_types"
+        }
+      ],
+      "narrative_cells": [
+        "attributes-story"
+      ],
+      "result_cells": [
+        "attributes-finding"
+      ],
+      "interpretation_cells": [
+        "attributes-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:43:26.040494+00:00",
+        "notebook_sha256": "312492fa3a141e0b12711624352e2161266b6bb92968d1c836839d0df747b4e4",
+        "catalog_sha256": [
+          "119c56a641ac2067390b8403581f219698c18784653ad3662f0ede8fdc260701",
+          "50f585c0aff2e894c332cfd84f3003abe91a2c4cdbe56789c9fe4e79876dc245"
+        ],
+        "purpose": "Use the fixed reference to label only observed type IDs while preserving unknown IDs by LEFT JOIN.",
+        "finding": "The selected record has3observed types(SI,FN,DATA); joined purposes distinguish metadata,names and content. Reference membership does not establish that every listed type occurred."
+      }
+    }
+  ]
+}

@@ -1,102 +1,113 @@
-# Review scope and timestamp clues
+# NTFS MFT examples
 
-[Open the executed notebook](01_scope_and_timestamp_review.ipynb). It decodes a
-synthetic NTFS Master File Table, compares SI and FN creation timestamps, displays
-the worker's heuristic reasons, and traces which records and resident streams
-remain when deleted entries are excluded from review.
+- [01 · Keep the review scope visible](01_scope_and_timestamp_review.ipynb) retains the original allocation/timestamp walkthrough. Its experiment excludes unallocated records while preserving the complete decoded fixture. [Open in Colab](https://colab.research.google.com/github/Query-farm/vgi-mft/blob/main/notebooks/01_scope_and_timestamp_review.ipynb).
+- [02 · Trace one entry](02_trace_one_entry_from_header_to_attributes.ipynb) separates header probes, validation, names, path reconstruction, attributes and streams. Its experiment changes entry 22 (`notes.txt`) to 25 (`orphan.dat`). [Open in Colab](https://colab.research.google.com/github/Query-farm/vgi-mft/blob/main/notebooks/02_trace_one_entry_from_header_to_attributes.ipynb).
 
-## Run from this folder
+Choose **Runtime → Run all** in Colab. The brief base-package bootstrap retains
+compatible preloaded kernel/data/plotting libraries and retrieves immutable,
+SHA256-verified companions. For local execution, install [uv](https://docs.astral.sh/uv/)
+and run from this `notebooks/` directory:
 
-Install [uv](https://docs.astral.sh/uv/), then:
-
-```bash
-uv sync --frozen
-uv run python execute.py
+```sh
+uv sync --locked
+uv run --locked vgi-notebooks
+uv run --locked vgi-notebooks 01_scope_and_timestamp_review.ipynb --parameters '{"INCLUDE_DELETED":false}' --output-dir artifacts/allocated-only
+uv run --locked vgi-notebooks 02_trace_one_entry_from_header_to_attributes.ipynb --parameters '{"ENTRY":25}' --output-dir artifacts/orphan
 ```
 
-The locked environment uses Python 3.13–3.14 and published Haybarn 2.0.0rc11.
-The visible SQL contains the pinned native release:
+For Jupyter select `.venv/bin/python`. Local publication uses the shared `[runner]`
+extra and lock; Colab installs the base package only. The runner saves successful
+defaults atomically, rejects unknown parameters and requires a separate destination
+for overrides. If an older bootstrap replaced kernel libraries, save your work and
+open the current notebook in a fresh runtime.
+
+Visible SQL starts the existing native release:
 
 ```sql
+INSTALL vgi FROM community;
+LOAD vgi;
 ATTACH 'mft' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mft@v0.4.0');
 ```
 
-VGI downloads the correct asset, verifies its checksum and caches it. Published
-assets cover Apple-silicon macOS and Linux x86-64/arm64. No worker checkout, source
-build, Windows host, credentials or live volume access is needed. First use needs
-network access to package indexes, GitHub release assets and community extensions;
-the MFT input itself is bundled locally. This folder runs independently of the
-surrounding repository. To upgrade, change the literal tag and repeat both runs
-and repository checks.
+VGI downloads the platform artifact, verifies its checksum and caches it. No Rust
+build, worker checkout, Windows host, credentials or live volume is required.
+The notebooks run from their directory alone. Initial extension, package, binary
+and companion retrieval needs network access. The local lock uses **Haybarn
+2.0.0rc11**, tested on macOS arm64. Change the literal release only after checking
+its catalog, defaults and experiments. Other published platforms were not executed.
 
-For an editor, register and select the notebook environment:
+The [shared v0.3.17 standard](https://github.com/Query-farm/vgi-example-notebooks/blob/v0.3.17/docs/standard.md)
+supplies proper catalog title/subtitle, branding, isolated SQL secrets, execution
+protections and SVG output. Keep `charts/` beside saved notebooks for the public
+content-addressed SVG links. Interactive reruns retain native SVG; review PNGs,
+logs and experiment copies remain ignored. Hosted Colab was not manually operated;
+validation uses a fresh compatible kernel with eight relevant libraries preloaded.
 
-```bash
-uv run python -m ipykernel install --user --name mft-examples \
-  --display-name "Python (vgi-mft notebooks)"
-```
+Coverage is **9 of 9 named public SQL surfaces**: `read_mft`, `timestomp`, `streams`,
+`record_header`, `well_formed`, `mft_record`, `full_path`, `attributes`, and the
+`ntfs_attribute_types` view. Actual exports contain five scalars, one table function,
+two relation-input functions and one view. Alternate input forms count once;
+no objects are excluded. `coverage.json` binds complete released/current catalogs,
+output columns, execution receipts and reviewed SQL/narrative/result mappings.
+Notebooks execute the release. Current source has matching interfaces and unchanged
+decoder/dependencies; compatible coverage does not claim current-main notebook execution.
 
-Restart and run all after editing parameters. Python setup and plotting source are
-folded; parameter, connection and analytical SQL stay visible. The runner uses a
-fresh temporary kernel with this folder as cwd and writes only after success.
-Overrides require a separate destination, which receives fixture, asset, helper
-and environment/documentation companions. Generated artifacts are ignored.
+## Exact synthetic provenance
 
-## Scope experiment
+`fixtures/sample.mft` is the unchanged **26,624-byte** repository sample from
+revision `577c3df0d916bc442cc22dfa50bc4394cf69c0e1`, generated by
+`crates/mft-worker/examples/gen_fixture.rs`. The provenance manifest records its
+SHA256 and the setup verifies it. The MIT worker license is included. The generator
+authors directories, primary/alternate resident streams, non-resident data, a
+deleted resident log, divergent SI/FN timestamps and an orphan with a missing parent.
+Names, contents and timestamps are invented. Internal timestamps are not a capture
+date. Hash agreement identifies bytes; it does not establish forensic chain of custody.
 
-```bash
-uv run python execute.py --parameters '{"INCLUDE_DELETED":false}' \
-  --output-dir validation/allocated-only
-```
+All decoding and analytical transformations use the real released worker through
+visible SQL. Helpers verify fixture/parameters and draw charts. No source bytes
+are modified, no live filesystem is read and no actual incident is investigated.
 
-`INCLUDE_DELETED` accepts a Boolean, default `true`. Both runs decode the full
-fixture before selecting non-directory records. Compare the coverage table,
-timeline, signal matrix and resident stream count/bytes. Excluding unallocated
-records removes the retained deleted log from the selected population, while
-leaving the timestamps and heuristic results of retained records unchanged.
-Restore `True` for the saved default. This is a review filter, not deletion or
-modification of the source bytes.
+## Reading the results
 
-## Exact fixture provenance
+Notebook 01 always decodes ten records before selecting seven non-directory entries.
+`INCLUDE_DELETED=False` reduces the selection to six, removes the retained deleted
+log and reduces available resident content from 44 to 35 bytes. The retained
+records' timestamps and heuristic results do not change. This is a review filter,
+not deletion or a change to the decoder. The MFT metadata record is explicitly
+included in the non-directory population.
 
-[fixtures/sample.mft](fixtures/sample.mft) is an unchanged 26,624-byte copy of
-`data/sample.mft` at revision `577c3df0d916bc442cc22dfa50bc4394cf69c0e1`.
-[provenance.json](fixtures/provenance.json) records its SHA-256 and source generator,
-`crates/mft-worker/examples/gen_fixture.rs`. The notebook verifies that hash.
+SI and FN remain separate timestamp families. SQL `TIMESTAMP` values carry UTC
+without a timezone; the plot makes no local conversion. Its connector is a
+creation-field difference, not a lifetime. Missing timestamps stay missing. The
+worker flag and reason columns are heuristic clues, not proof of tampering,
+malicious intent, attribution or detection accuracy. All four SI fields being equal
+does not alone trigger the flag. The matrix does not sum columns into a risk score.
 
-The generator creates a directory tree, resident and non-resident data, an alternate
-data stream, a deleted resident log, a record with deliberately divergent SI/FN
-timestamps, and an orphan whose parent is absent. All names, contents and timestamps
-are invented. This is not an incident collection, a real disk image or a provenance
-claim about any person or system. The internal fixture timestamps are not a capture
-date. Hash verification identifies these exact bytes; it does not establish a
-forensic chain of custody.
+Notebook 02 probes the selected record plus zero-filled slot 1 and out-of-range
+index 26. Invalid controls retain reasons and NULL records; they are not extra
+zero-attribute files. The `truncated` reason at index 26 concerns that requested
+index, not a claim that this bounded fixture is an incomplete collection. These
+controls cover two invalid cases, not every possible corruption class. A header
+is a projection and does not replace full record validation.
 
-All decoding, timeline fields, timestamp heuristic results and stream fan-out come
-from the real worker through Haybarn/VGI. Visible SQL materializes the complete
-input once, selects the scope, calls the scalar heuristic and table-in-out stream
-function, and reconciles their outputs. Python handles presentation only.
+Entry 22 has two namespace names, five attribute instances and two streams exposing
+18 resident bytes. Entry 25 has one name, three attributes and one stream exposing
+four bytes; it remains valid but retains an `orphan-parent` diagnostic. A DOS alias
+is not a second file. Attribute rows, streams, bytes and declared hard-link counts
+are distinct quantities. Header used/allocated size describes the FILE record,
+not content bytes. Logical attribute-value bytes also include metadata.
 
-## Interpretation limits
+The attribute reference is vocabulary, not a list of types observed in this file.
+LEFT JOIN preserves any unknown type IDs. A reconstructed orphan path is not a
+verified live-volume location. Deleted does not mean bytes are absent; conversely,
+non-resident logical size is not recovered content. No runlist is followed into disk
+clusters. Stream fan-out is aggregated within entry before joining to the timeline.
 
-NTFS FILETIME values are decoded to timezone-free SQL `TIMESTAMP` columns carrying
-UTC values. The chart preserves that convention without local conversion. Its
-connecting segment is the difference between two creation fields, not a lifetime.
-Missing timestamps remain missing and would be excluded from the paired plot with
-its coverage count displayed.
-
-The worker flag is a heuristic. SI/FN differences and whole-second values are
-review clues, not proof of tampering or attribution; all four SI fields being equal
-does not alone raise the flag. The matrix keeps these reasons separate from
-allocation, alternate-stream presence and path diagnostics. It is not a risk score
-or a detection-quality evaluation. File names do not drive the heuristic.
-
-A reconstructed orphan path is not a verified live-volume location. Deleted does
-not mean content is absent. Conversely, non-resident logical size does not mean
-those bytes were recovered: the worker does not follow runlists into disk clusters.
-The stream table can have more or fewer rows than the record table, so counts are
-aggregated by entry before joining. The `$MFT` record itself remains in this
-non-directory population; directory records are excluded explicitly.
-
-See the pinned [worker README](https://github.com/Query-farm/vgi-mft/blob/577c3df0d916bc442cc22dfa50bc4394cf69c0e1/README.md)
-and [STANDARD.md](STANDARD.md).
+Validation includes both defaults and detached experiments, 24 SQL relationship
+checks, three reviewed default figures and the corresponding experiment figures,
+six runner guards and one fresh preloaded bootstrap for the shared companion/launch
+path. Existing green [source CI at 3f1b009](https://github.com/Query-farm/vgi-mft/actions/runs/43573266112)
+is reused: worker source and root dependencies are unchanged, so no source rebuild,
+full-suite repetition or source/container CI is triggered. Prior source validation
+passed 37 Rust tests, 72 stdio / 78 HTTP / 72 Unix SQL assertions, build, Clippy,
+rustfmt, rustdoc and metadata 100/100 L2 with zero findings.

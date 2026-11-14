@@ -1,0 +1,61 @@
+{
+  "query": "DESCRIBE SELECT * FROM mft.main.streams((SELECT content AS blob,22::UBIGINT AS entry FROM read_blob('fixtures/sample.mft')))",
+  "columns": [
+    "column_name",
+    "column_type",
+    "null",
+    "key",
+    "default",
+    "extra"
+  ],
+  "rows": [
+    [
+      "entry",
+      "UBIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "name",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "logical_size",
+      "UBIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "physical_size",
+      "UBIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "resident",
+      "BOOLEAN",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "data",
+      "BLOB",
+      "YES",
+      null,
+      null,
+      null
+    ]
+  ]
+}

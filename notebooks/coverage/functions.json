@@ -1,0 +1,329 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='mft' ORDER BY schema_name,function_name,parameter_types",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "mft",
+      "22592",
+      "main",
+      "attributes",
+      null,
+      "table",
+      "Fan each MFT record's attributes into rows (relation in/out)",
+      null,
+      {
+        "vgi.category": "Attributes & Streams",
+        "vgi.doc_llm": "Fan every attribute of each ($MFT blob, entry) row of the input relation into one output row: attribute_id, type_id, type_name (e.g. $STANDARD_INFORMATION, $FILE_NAME, $DATA), resident flag, name (an ADS name when present), logical/physical size, and flags. The mft_dump-style deep per-attribute view. Pass a relation with a `blob` column of $MFT bytes and an `entry` column of record indexes (DuckDB table functions cannot take correlated column args, so the relation form is used).",
+        "vgi.doc_md": "Fan every attribute of each `(blob, entry)` input row into one output row \u2014 columns `entry`, `attribute_id`, `type_id`, `type_name` (e.g. `$STANDARD_INFORMATION`, `$FILE_NAME`, `$DATA`), `resident`, `name` (an ADS name when present), `logical_size`, `physical_size`, and `flags`. Pass a relation carrying a `blob` column of $MFT bytes and an `entry` column of record numbers; the `ntfs_attribute_types` view maps each `type_id` to its meaning.",
+        "vgi.example_queries": "[\n  {\"description\": \"List every attribute (type, residency, ADS name, size) of one sample $MFT record.\",\n   \"sql\": \"SELECT entry, type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))\"}\n]",
+        "vgi.executable_examples": "[\n  {\"description\": \"List every attribute (type, residency, ADS name, size) of one sample $MFT record.\",\n   \"sql\": \"SELECT type_name, resident, name, logical_size FROM mft.main.attributes((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')))) ORDER BY attribute_id\"}\n]",
+        "vgi.keywords": "[\"attributes\",\"mft attributes\",\"attribute list\",\"type_id\",\"resident\",\"non-resident\",\"deep view\",\"mft_dump\",\"ntfs\",\"lateral\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"entry\",\"type\":\"UBIGINT\",\"description\":\"MFT record number this attribute belongs to.\"},{\"name\":\"attribute_id\",\"type\":\"USMALLINT\",\"description\":\"The attribute instance id within the record.\"},{\"name\":\"type_id\",\"type\":\"UINTEGER\",\"description\":\"NTFS attribute type code (e.g. 0x10, 0x30, 0x80).\"},{\"name\":\"type_name\",\"type\":\"VARCHAR\",\"description\":\"Canonical attribute name (e.g. $STANDARD_INFORMATION, $FILE_NAME, $DATA).\"},{\"name\":\"resident\",\"type\":\"BOOLEAN\",\"description\":\"Whether the attribute value is stored inside the record (resident).\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"The attribute name (e.g. an ADS name); NULL when unnamed.\"},{\"name\":\"logical_size\",\"type\":\"UBIGINT\",\"description\":\"The attribute's logical (data) size in bytes.\"},{\"name\":\"physical_size\",\"type\":\"UBIGINT\",\"description\":\"The attribute's allocated/on-disk size in bytes.\"},{\"name\":\"flags\",\"type\":\"UINTEGER\",\"description\":\"Attribute data flags (compressed/encrypted/sparse bits).\"}]",
+        "vgi.title": "MFT Attributes (LATERAL)"
+      },
+      null,
+      [
+        "relation"
+      ],
+      [
+        "TABLE"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22601,
+      [],
+      null,
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "full_path",
+      null,
+      "scalar",
+      "Reconstruct one $MFT entry's full path from parent references",
+      null,
+      {
+        "vgi.category": "Records",
+        "vgi.doc_llm": "Reconstruct the full filesystem path of MFT entry `entry` in a $MFT `blob` by walking parent references up to the volume root. Returns `\\$Orphan\\\u2026` when a parent is missing or its slot was reused, and `\\$Cycle\\\u2026` when a corrupt parent loop is detected (the walk is depth- and cycle-bounded, never spins). NULL when the entry has no name record.",
+        "vgi.doc_md": "Reconstruct an $MFT entry's full path from parent references: `full_path(blob, entry)`; `\\$Orphan\\\u2026` / `\\$Cycle\\\u2026` when unresolved.",
+        "vgi.example_queries": "[\n  {\"description\": \"Reconstruct the full filesystem path of one record (entry 20) in the sample $MFT.\",\n   \"sql\": \"SELECT mft.main.full_path((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS full_path\"}\n]",
+        "vgi.keywords": "[\"full path\",\"path reconstruction\",\"parent reference\",\"directory\",\"orphan\",\"cycle\",\"mft\",\"ntfs\",\"filesystem path\"]",
+        "vgi.title": "Reconstruct MFT Path"
+      },
+      "VARCHAR",
+      [
+        "blob",
+        "entry"
+      ],
+      [
+        "BLOB",
+        "UBIGINT"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22596,
+      [
+        "SELECT mft.main.full_path((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS full_path"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "mft_record",
+      null,
+      "scalar",
+      "Fully decode one $MFT record into a lossless STRUCT view",
+      null,
+      {
+        "vgi.category": "Records",
+        "vgi.doc_llm": "Fully decode MFT entry `entry` in a $MFT `blob` into a `STRUCT` carrying the header (entry, sequence, in_use, is_dir, base_ref, lsn, hard_links), the $STANDARD_INFORMATION MACB + DOS attrs + USN (`si`), the full `LIST` of every $FILE_NAME (`fn` \u2014 including the 8.3 DOS short name, with namespace and parent reference), the primary $DATA (`data` \u2014 resident bytes when small), the alternate data streams (`ads`), and every attribute (`attributes`). The raw, lossless per-record view, NULL for an empty slot.",
+        "vgi.doc_md": "Fully decode one $MFT record: `mft_record(blob, entry)` \u2192 `STRUCT(entry, sequence, in_use, is_dir, base_ref, lsn, hard_links, si, fn LIST, data, ads LIST, attributes LIST)`.",
+        "vgi.example_queries": "[\n  {\"description\": \"Fully decode one sample $MFT record, exposing its primary name and how many alternate data streams it carries.\",\n   \"sql\": \"SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)\"}\n]",
+        "vgi.keywords": "[\"mft record\",\"decode\",\"struct\",\"standard information\",\"file name\",\"MACB\",\"data\",\"ADS\",\"attributes\",\"namespace\",\"DOS short name\",\"ntfs\"]",
+        "vgi.title": "Decode MFT Record"
+      },
+      "STRUCT(entry UBIGINT, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, hard_links USMALLINT, si STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, dos_attr UINTEGER, usn UBIGINT), fn STRUCT(\"name\" VARCHAR, namespace VARCHAR, parent_entry UBIGINT, parent_seq USMALLINT, created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP, logical_size UBIGINT, physical_size UBIGINT)[], \"data\" STRUCT(resident BOOLEAN, logical_size UBIGINT, physical_size UBIGINT, resident_bytes BLOB), ads STRUCT(\"name\" VARCHAR, logical_size UBIGINT, resident BOOLEAN)[], attributes STRUCT(type_id UINTEGER, type_name VARCHAR, resident BOOLEAN, \"name\" VARCHAR)[])",
+      [
+        "blob",
+        "entry"
+      ],
+      [
+        "BLOB",
+        "UBIGINT"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22597,
+      [
+        "SELECT r.fn[1].name AS primary_name, len(r.ads) AS ads_count FROM (SELECT mft.main.mft_record((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 22) AS r)"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "read_mft",
+      null,
+      "table",
+      "Parse a collected NTFS $MFT into a forensic filesystem timeline",
+      null,
+      {
+        "vgi.category": "Timeline",
+        "vgi.doc_llm": "Parse a collected NTFS $MFT (Master File Table) into a full forensic filesystem timeline \u2014 one row per FILE record, with the path reconstructed from parent references, both the $STANDARD_INFORMATION and $FILE_NAME MACB timestamp quads (so the SI-vs-FN timestomp mismatch is a plain WHERE clause), logical/physical sizes, allocated/deleted and file/dir flags, alternate data streams, and resident file content. The first argument is a `VARCHAR` path or glob ('/cases/*/$MFT', 's3://\u2026') or a `BLOB` of $MFT bytes. `host :=` scopes a collection (defaults to the source filename); `mode :=` is 'files' (one row per record, the default), 'streams' (one row per $DATA stream \u2014 primary + each ADS), or 'allocated' (live files only). Deleted but still-resident records are included by default \u2014 filter with WHERE is_allocated for live files only.",
+        "vgi.doc_md": "Parse a collected NTFS `$MFT` into a forensic timeline: one row per FILE record with reconstructed `full_path`, the SI + FN MACB quads, sizes, deleted/dir flags, ADS, and resident data. `read_mft(path_or_blob, host := \u2026, mode := 'files'|'streams'|'allocated')`.",
+        "vgi.executable_examples": "[\n  {\"description\": \"The headline timeline: one row per FILE record with its reconstructed path and deleted flag.\",\n   \"sql\": [\"SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))\", \"SELECT entry, full_path, is_deleted FROM mft.main.read_mft(getvariable('mft_sample')) ORDER BY entry\"]},\n  {\"description\": \"Hunt the sample $MFT for timestomped records \u2014 the SI-vs-FN mismatch is a plain WHERE clause.\",\n   \"sql\": [\"SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))\", \"SELECT full_path FROM mft.main.read_mft(getvariable('mft_sample')) WHERE is_timestomp_suspect ORDER BY full_path\"]},\n  {\"description\": \"Surface every alternate data stream by switching to streams mode.\",\n   \"sql\": [\"SET VARIABLE mft_sample = (SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))\", \"SELECT full_path, ads_name FROM mft.main.read_mft(getvariable('mft_sample'), mode := 'streams') WHERE ads_name IS NOT NULL ORDER BY full_path\"]}\n]",
+        "vgi.keywords": "[\"mft\",\"$MFT\",\"ntfs\",\"master file table\",\"dfir\",\"forensics\",\"timeline\",\"windows\",\"filesystem\",\"timestomp\",\"MACB\",\"deleted files\",\"alternate data stream\",\"ADS\",\"path reconstruction\",\"incident response\",\"threat hunt\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"host\",\"type\":\"VARCHAR\",\"description\":\"Collection scope \u2014 the source host id supplied via `host :=` (or derived from `filename` under a glob); keeps paths and parents from colliding across hosts.\"},{\"name\":\"entry\",\"type\":\"UBIGINT\",\"description\":\"MFT record number (index into the table).\"},{\"name\":\"sequence\",\"type\":\"USMALLINT\",\"description\":\"Record sequence (reuse counter); with `entry` forms the file reference.\"},{\"name\":\"parent_entry\",\"type\":\"UBIGINT\",\"description\":\"Parent directory's MFT entry, from the primary $FILE_NAME.\"},{\"name\":\"full_path\",\"type\":\"VARCHAR\",\"description\":\"Reconstructed path; `\\\\$Orphan\\\\\u2026` / `\\\\$Cycle\\\\\u2026` when unresolved.\"},{\"name\":\"file_name\",\"type\":\"VARCHAR\",\"description\":\"Primary (Win32) name component.\"},{\"name\":\"is_dir\",\"type\":\"BOOLEAN\",\"description\":\"Header DIRECTORY flag (0x02).\"},{\"name\":\"is_allocated\",\"type\":\"BOOLEAN\",\"description\":\"Header IN_USE flag (0x01) set \u2014 a live file.\"},{\"name\":\"is_deleted\",\"type\":\"BOOLEAN\",\"description\":\"NOT is_allocated \u2014 resident but slot freed (recoverable artifact).\"},{\"name\":\"si_created\",\"type\":\"TIMESTAMP\",\"description\":\"$STANDARD_INFORMATION Born (created).\"},{\"name\":\"si_modified\",\"type\":\"TIMESTAMP\",\"description\":\"$STANDARD_INFORMATION Modified.\"},{\"name\":\"si_accessed\",\"type\":\"TIMESTAMP\",\"description\":\"$STANDARD_INFORMATION Accessed.\"},{\"name\":\"si_mft_modified\",\"type\":\"TIMESTAMP\",\"description\":\"$STANDARD_INFORMATION Changed (MFT-modified).\"},{\"name\":\"fn_created\",\"type\":\"TIMESTAMP\",\"description\":\"$FILE_NAME Born (created).\"},{\"name\":\"fn_modified\",\"type\":\"TIMESTAMP\",\"description\":\"$FILE_NAME Modified.\"},{\"name\":\"fn_accessed\",\"type\":\"TIMESTAMP\",\"description\":\"$FILE_NAME Accessed.\"},{\"name\":\"fn_mft_modified\",\"type\":\"TIMESTAMP\",\"description\":\"$FILE_NAME Changed (MFT-modified).\"},{\"name\":\"logical_size\",\"type\":\"UBIGINT\",\"description\":\"Actual data size (unnamed $DATA logical length).\"},{\"name\":\"physical_size\",\"type\":\"UBIGINT\",\"description\":\"Allocated/on-disk size (cluster-rounded).\"},{\"name\":\"hard_link_count\",\"type\":\"USMALLINT\",\"description\":\"Header hard-link count; >1 \u21d2 multiple names/links.\"},{\"name\":\"dos_attributes\",\"type\":\"UINTEGER\",\"description\":\"SI DOS file-attribute bitmask (hidden/system/readonly/\u2026).\"},{\"name\":\"ads_name\",\"type\":\"VARCHAR\",\"description\":\"Name of a non-default $DATA stream (ADS); NULL for the primary stream.\"},{\"name\":\"resident_data\",\"type\":\"BLOB\",\"description\":\"Inline content when the unnamed $DATA is resident; NULL if non-resident.\"},{\"name\":\"is_timestomp_suspect\",\"type\":\"BOOLEAN\",\"description\":\"Convenience flag = timestomp(si, fn).suspect (\u00a7A.6).\"},{\"name\":\"diagnostics\",\"type\":\"VARCHAR\",\"description\":\"NULL on a clean parse; else fixup-mismatch, baad, orphan-parent, cycle, attr-overflow, attr-overrun, truncated, decode-error:<detail>.\"}]",
+        "vgi.title": "Read $MFT Forensic Timeline"
+      },
+      null,
+      [
+        "glob_or_blob",
+        "mode",
+        "host"
+      ],
+      [
+        "ANY",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22602,
+      [],
+      null,
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "record_header",
+      null,
+      "scalar",
+      "Probe one $MFT record's FILE header without decoding attributes",
+      null,
+      {
+        "vgi.category": "Records",
+        "vgi.doc_llm": "Decode just the FILE-record header of MFT entry `entry` in a $MFT `blob`: the signature ('FILE'/'BAAD'), sequence number, IN_USE and DIRECTORY flags, base record reference, $LogFile sequence number (LSN), and used/allocated record sizes. A cheap validity / LSN-correlation probe that does not decode attributes.",
+        "vgi.doc_md": "Probe an $MFT record's FILE header (signature, sequence, in_use, is_dir, base_ref, lsn, sizes) without decoding attributes: `record_header(blob, entry)`.",
+        "vgi.example_queries": "[\n  {\"description\": \"Probe just the FILE-record header of one sample record (entry 12): signature, directory flag, and sequence number.\",\n   \"sql\": \"SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 12) AS h)\"}\n]",
+        "vgi.keywords": "[\"record header\",\"FILE header\",\"signature\",\"sequence\",\"in_use\",\"is_dir\",\"LSN\",\"base reference\",\"mft\",\"ntfs\",\"probe\"]",
+        "vgi.title": "MFT Record Header"
+      },
+      "STRUCT(signature VARCHAR, \"sequence\" USMALLINT, in_use BOOLEAN, is_dir BOOLEAN, base_ref UBIGINT, lsn UBIGINT, used_size UINTEGER, allocated_size UINTEGER)",
+      [
+        "blob",
+        "entry"
+      ],
+      [
+        "BLOB",
+        "UBIGINT"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22598,
+      [
+        "SELECT h.signature, h.is_dir, h.sequence FROM (SELECT mft.main.record_header((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 12) AS h)"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "streams",
+      null,
+      "table",
+      "Fan each MFT record's $DATA streams into rows (relation in/out)",
+      null,
+      {
+        "vgi.category": "Attributes & Streams",
+        "vgi.doc_llm": "Fan every $DATA stream of each ($MFT blob, entry) row of the input relation into one output row: the unnamed primary stream (name NULL) plus each alternate data stream (ADS, name set). Columns: entry, name, logical_size, physical_size, resident, and data (the resident bytes when the stream is resident, else NULL). ADS are a classic malware hiding spot. Pass a relation with a `blob` column of $MFT bytes and an `entry` column of record indexes (DuckDB table functions cannot take correlated column args).",
+        "vgi.doc_md": "Fan every $DATA stream (the unnamed primary stream plus each alternate data stream) of each `(blob, entry)` input row into one output row \u2014 columns `entry`, `name` (NULL for the primary stream, set for an ADS), `logical_size`, `physical_size`, `resident`, and `data` (the resident bytes when the stream is resident, else NULL). Alternate data streams are a classic malware hiding spot. Pass a relation carrying a `blob` column of $MFT bytes and an `entry` column of record numbers.",
+        "vgi.example_queries": "[\n  {\"description\": \"List the $DATA streams (primary + each ADS) of one sample $MFT record.\",\n   \"sql\": \"SELECT entry, name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft'))))\"}\n]",
+        "vgi.executable_examples": "[\n  {\"description\": \"List the $DATA streams of one sample $MFT record, surfacing the hidden ADS by name.\",\n   \"sql\": \"SELECT name, logical_size, resident FROM mft.main.streams((FROM (SELECT content AS blob, 22::UBIGINT AS entry FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')))) ORDER BY name NULLS FIRST\"}\n]",
+        "vgi.keywords": "[\"streams\",\"$DATA\",\"alternate data stream\",\"ADS\",\"resident\",\"malware hiding\",\"mft\",\"ntfs\",\"lateral\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"entry\",\"type\":\"UBIGINT\",\"description\":\"MFT record number this $DATA stream belongs to.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Stream name: NULL for the primary unnamed $DATA, set for an ADS.\"},{\"name\":\"logical_size\",\"type\":\"UBIGINT\",\"description\":\"The stream's logical (data) size in bytes.\"},{\"name\":\"physical_size\",\"type\":\"UBIGINT\",\"description\":\"The stream's allocated/on-disk size in bytes.\"},{\"name\":\"resident\",\"type\":\"BOOLEAN\",\"description\":\"Whether the stream's bytes are stored inside the record (resident).\"},{\"name\":\"data\",\"type\":\"BLOB\",\"description\":\"The resident stream bytes when resident; NULL when non-resident.\"}]",
+        "vgi.title": "MFT $DATA Streams (LATERAL)"
+      },
+      null,
+      [
+        "relation"
+      ],
+      [
+        "TABLE"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22603,
+      [],
+      null,
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "timestomp",
+      null,
+      "scalar",
+      "Score the SI-vs-FN timestomp heuristic over two MACB quads",
+      null,
+      {
+        "vgi.category": "Anti-Forensics",
+        "vgi.doc_llm": "Score the anti-forensic SI-vs-FN timestamp heuristic over a $STANDARD_INFORMATION MACB quad `si` and a $FILE_NAME MACB quad `fn` (each a `STRUCT(created, modified, accessed, mft_modified)` of `TIMESTAMP`). Returns `STRUCT(suspect BOOLEAN, reasons LIST<VARCHAR>)`; reasons \u2286 {si-before-fn, si-creation-before-fn-creation, zero-subsecond, fn-newer-than-si, all-four-equal}. SI is user-writable (tools like timestomp edit it) while FN is kernel-only, so SI earlier than FN \u2014 naturally impossible \u2014 and whole-second SI values are strong tells. Composable over the read_mft si_* / fn_* columns.",
+        "vgi.doc_md": "Score the SI-vs-FN timestomp heuristic: `timestomp(si, fn)` \u2192 `STRUCT(suspect, reasons)`. reasons \u2286 {si-before-fn, si-creation-before-fn-creation, zero-subsecond, fn-newer-than-si, all-four-equal}.",
+        "vgi.example_queries": "[\n  {\"description\": \"Flag a record whose $STANDARD_INFORMATION quad predates its $FILE_NAME quad \u2014 the naturally-impossible ordering timestomping produces.\",\n   \"sql\": \"SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect\"}\n]",
+        "vgi.keywords": "[\"timestomp\",\"anti-forensic\",\"timestamp manipulation\",\"SI\",\"FN\",\"standard information\",\"file name\",\"MACB\",\"divergence\",\"zero subsecond\",\"dfir\"]",
+        "vgi.title": "Timestomp Heuristic"
+      },
+      "STRUCT(suspect BOOLEAN, reasons VARCHAR[])",
+      [
+        "si",
+        "fn"
+      ],
+      [
+        "STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP)",
+        "STRUCT(created TIMESTAMP, modified TIMESTAMP, accessed TIMESTAMP, mft_modified TIMESTAMP)"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT mft.main.timestomp({'created': TIMESTAMP '2009-01-01', 'modified': TIMESTAMP '2009-01-01', 'accessed': TIMESTAMP '2009-01-01', 'mft_modified': TIMESTAMP '2009-01-01'}, {'created': TIMESTAMP '2020-01-01', 'modified': TIMESTAMP '2020-01-01', 'accessed': TIMESTAMP '2020-01-01', 'mft_modified': TIMESTAMP '2020-01-01'}).suspect AS suspect"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mft",
+      "22592",
+      "main",
+      "well_formed",
+      null,
+      "scalar",
+      "Validate one $MFT record; never panics on corrupt input",
+      null,
+      {
+        "vgi.category": "Records",
+        "vgi.doc_llm": "Validate MFT entry `entry` in a $MFT `blob`, returning a `STRUCT(ok BOOLEAN, error VARCHAR, kind VARCHAR)`. `kind` is one of ok, baad, fixup-mismatch, bad-signature, attr-overrun, truncated, not-an-mft. Never panics \u2014 a corrupt or hostile record returns ok=false with the matching kind, so a validity scan over a whole $MFT is safe.",
+        "vgi.doc_md": "Validate an $MFT record: `well_formed(blob, entry)` \u2192 `STRUCT(ok, error, kind)` with kind \u2208 {ok, baad, fixup-mismatch, bad-signature, attr-overrun, truncated, not-an-mft}.",
+        "vgi.example_queries": "[\n  {\"description\": \"Validate one sample record (entry 20) \u2014 a clean record reports ok = true with kind 'ok'.\",\n   \"sql\": \"SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS w)\"}\n]",
+        "vgi.keywords": "[\"well formed\",\"validate\",\"corrupt\",\"baad\",\"fixup\",\"mismatch\",\"bad signature\",\"truncated\",\"mft\",\"ntfs\",\"integrity\"]",
+        "vgi.title": "MFT Record Well-Formed Check"
+      },
+      "STRUCT(ok BOOLEAN, \"error\" VARCHAR, kind VARCHAR)",
+      [
+        "blob",
+        "entry"
+      ],
+      [
+        "BLOB",
+        "UBIGINT"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22600,
+      [
+        "SELECT w.ok, w.kind FROM (SELECT mft.main.well_formed((SELECT content FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-mft/v0.2.0/data/sample.mft')), 20) AS w)"
+      ],
+      "CONSISTENT",
+      []
+    ]
+  ]
+}
