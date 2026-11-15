@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "mft-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "jiff",
  "log",
@@ -1617,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "mft-wasm"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "mft-worker",
  "vgi",
@@ -1625,7 +1625,7 @@ dependencies = [
 
 [[package]]
 name = "mft-worker"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "arrow-array",
  "arrow-buffer",

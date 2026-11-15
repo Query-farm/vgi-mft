@@ -109,7 +109,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  counterpart — naturally impossible — and whole-second values are strong \
                  anti-forensic tells. Both MACB timestamp quads are first-class columns.\n\n\
                  Built on the permissively-licensed `mft` crate (omerbenamram); the NTFS on-disk \
-                 layout is documented openly by Microsoft and the forensics community."
+                 layout is documented openly by Microsoft and the forensics community.\n\n\
+                 ## Sources and references\n\n\
+                 - [Master File Table (Microsoft Learn)](https://learn.microsoft.com/en-us/windows/win32/fileio/master-file-table)\n\
+                 - [libyal NTFS format documentation](https://github.com/libyal/libfsntfs/blob/main/documentation/New%20Technologies%20File%20System%20%28NTFS%29.asciidoc) — FILE records, attributes and timestamps\n\
+                 - [omerbenamram/mft](https://github.com/omerbenamram/mft) — the Rust `$MFT` parser this worker builds on ([docs.rs](https://docs.rs/mft))"
                     .to_string(),
             ),
             (
