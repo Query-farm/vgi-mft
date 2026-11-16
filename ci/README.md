@@ -1,45 +1,32 @@
-# CI: the vgi-mft worker integration suite
+# ci/ — integration harness
 
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs fmt/clippy/build,
-the Rust unit + integration tests, and this repo's sqllogictest suite
-(`test/sql/*.test`) against the vgi-mft VGI worker through the **real DuckDB
-`vgi` extension** on every push / PR.
+| file | purpose |
+| --- | --- |
+| `run-integration.sh` | Run `test/sql/*.test` through the published `haybarn-unittest` with the signed community `vgi` extension, over one `TRANSPORT` (`stdio` \| `launch` \| `http`). Sets `VGI_MFT_WORKER` (the ATTACH `LOCATION`) per transport. Adapted from the vgi-starters harness. |
+| `check-version.sh` | Assert the `[workspace.package]` version equals a release tag before publishing. |
 
-## Transport matrix
-
-The integration suite runs over **every transport the vgi extension supports**.
-The exact same `test/sql/*.test` files run three ways; the only thing that
-changes is what LOCATION the `.test` files `ATTACH` (set by
-[`run-integration.sh`](run-integration.sh) from the `TRANSPORT` env var):
-
-| `TRANSPORT`  | `VGI_MFT_WORKER` (the ATTACH LOCATION) | how the worker is launched |
-|--------------|----------------------------------------|----------------------------|
-| `subprocess` | `…/target/release/mft-worker`          | DuckDB spawns the stdio binary (default) |
-| `http`       | `http://127.0.0.1:<port>`              | `mft-worker --http` (auto port; prints `PORT:<n>` on stdout) |
-| `unix`       | `unix:///tmp/mft.<pid>.sock`           | `mft-worker --unix <sock>` (prints `UNIX:<sock>` + creates the socket) |
-
-CI runs `transport: [subprocess, http, unix]` × `os: [ubuntu, macos]` as a
-matrix. Build the worker once with a plain `cargo build --release` — the
-workspace already pins `vgi-rpc = { features = ["macros", "http"] }`, so the one
-binary serves all three transports; **no extra cargo feature is needed**.
-
-The `http` leg additionally needs DuckDB's `httpfs` (the vgi extension's HTTP
-client is built on it); [`preprocess-require.awk`](preprocess-require.awk)
-injects a signed `INSTALL httpfs FROM core; LOAD httpfs;` after each `LOAD vgi;`
-on that leg so a missing `httpfs` fails loudly rather than being silently
-auto-skipped.
-
-## Fixtures
-
-The `.test` files read a committed synthetic `$MFT` at `data/sample.mft`,
-referenced via `${VGI_MFT_DATA}` (exported by `run-integration.sh` as the repo's
-`data/` dir) so the path resolves regardless of the runner's cwd. Regenerate it
-with `cargo run -p mft-worker --example gen_fixture`.
-
-## Running locally
+## Run locally
 
 ```bash
-cargo build --release
-# point HAYBARN_UNITTEST at a downloaded haybarn-unittest binary
-HAYBARN_UNITTEST=/path/to/haybarn-unittest TRANSPORT=subprocess ci/run-integration.sh
+make test-sql                       # build, install haybarn-unittest into .tools, run stdio + launch + http
+make test-sql TRANSPORTS=launch     # one transport
+TEST_PATTERN=test/sql/<file>.test make test-sql TRANSPORTS=stdio   # one file
 ```
+
+Transports: `stdio` — DuckDB spawns the worker per connection; `launch` —
+DuckDB starts the worker once on a unix socket (`LOCATION 'launch:/path'`) and
+pools connections; `http` — the worker runs `--http --port 0` and prints
+`PORT:<n>`.
+
+The script stages the tests, rewrites `require vgi` into `LOAD vgi` and loads
+`httpfs` on the http transport. It runs with a config that turns off the
+runner's error-to-skip rule, and fails on any skip not listed in
+`EXPECTED_SKIP_REASONS` and when fewer than `MIN_EXECUTED` files ran. A broken
+lane therefore cannot pass as all skips.
+
+The Docker image test (`.github/workflows/docker-publish.yml`) reuses the script
+with a preset LOCATION (`docker run -i … stdio` with `TRANSPORT=stdio`, or the
+container's `http://` URL with `TRANSPORT=http`).
+
+The tests read the committed `data/` fixtures by absolute path via
+`VGI_MFT_DATA` (the Docker image test bind-mounts `data/` at that same path).

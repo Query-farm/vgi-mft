@@ -97,7 +97,7 @@ jobs:
         # data/ is mounted at the SAME absolute path run-integration.sh exports as
         # VGI_MFT_DATA ($PWD/data) so the timestomp block's read_mft('<path>')
         # resolves inside the spawned worker container.
-        TRANSPORT=subprocess \
+        TRANSPORT=stdio \
           TEST_PATTERN="test/sql/scalars.test" \
           VGI_MFT_WORKER="docker run -i --rm -v $PWD/data:$PWD/data:ro $CITEST_IMAGE stdio" \
           ci/run-integration.sh

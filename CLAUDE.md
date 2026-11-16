@@ -85,7 +85,7 @@ cargo fmt --all --check
 cargo test --workspace --all-features
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
 # metadata: uvx --prerelease=allow --from vgi-lint-check vgi-lint lint <bin> --execute --ai --ai-concurrency 1 --fail-on info
-# SQL E2E: ci/run-integration.sh over TRANSPORT=subprocess|http|unix
+# SQL E2E: make test-sql (ci/run-integration.sh over TRANSPORT=stdio|launch|http)
 ```
 
 The `http` E2E exercises the cursor/resolver resume round-trip; run the linter

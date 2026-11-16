@@ -195,8 +195,8 @@ cargo build --release                     # build the worker binary
 cargo test --workspace                    # unit + golden + zero-panic fuzz tests
 cargo run -p mft-worker --example gen_fixture   # regenerate data/sample.mft
 
-# SQL end-to-end across every transport (needs a haybarn-unittest binary):
-HAYBARN_UNITTEST=/path/to/haybarn-unittest TRANSPORT=subprocess ci/run-integration.sh
+# SQL end-to-end over stdio, launch and http:
+make test-sql
 ```
 
 See [ci/README.md](ci/README.md) for the transport matrix and [CLAUDE.md](CLAUDE.md)
